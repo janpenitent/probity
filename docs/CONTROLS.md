@@ -24,7 +24,7 @@ Controls map NIS2 Article 21(2) measures to concrete technical checks.
 | C15 | 21(2)(e)        | Vulnerability disclosure process          | security.txt      | SOFT | planned |
 | C16 | 21(2)(g)        | Security training completed               | HR/LMS            | HARD | planned |
 | C17 | 21(2)(h)        | Encryption at rest                        | cloud + DB config | HARD | done    |
-| C18 | 21(2)(h)        | Encryption in transit (healthy TLS)       | endpoint scan     | HARD | planned |
+| C18 | 21(2)(h)        | Encryption in transit (healthy TLS)       | endpoint scan     | HARD | done    |
 | C19 | 21(2)(i)        | Access control: orphan & over-privileged  | IdP + HR          | HARD | done    |
 | C20 | 21(2)(j)        | Multi-factor authentication enforced      | IdP config        | HARD | done    |
 

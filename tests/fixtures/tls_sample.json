@@ -1,0 +1,8 @@
+{
+  "endpoints": [
+    {"id": "ep-portal", "host": "portal.example.com", "tls_version": "1.3", "cert_valid": true, "cert_expires_in_days": 60},
+    {"id": "ep-api", "host": "api.example.com", "tls_version": "1.2", "cert_valid": true, "cert_expires_in_days": 14},
+    {"id": "ep-legacy", "host": "legacy.example.com", "tls_version": "1.0", "cert_valid": true, "cert_expires_in_days": 30},
+    {"id": "ep-stale", "host": "old.example.com", "tls_version": "1.3", "cert_valid": false, "cert_expires_in_days": -5}
+  ]
+}
