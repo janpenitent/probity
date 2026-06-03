@@ -42,3 +42,16 @@ def test_scan_with_cloud_source_includes_c17(capsys):
     ids = {f["control_id"] for f in report["findings"]}
     assert "C17" in ids
     assert rc == 1  # unencrypted volumes present
+
+
+def test_scan_with_tls_source_includes_c18(capsys):
+    from pathlib import Path
+
+    tls = str(Path(FIXTURE).parent / "tls_sample.json")
+    rc = main(["scan", "--source", FIXTURE, "--tls", tls, "--format", "json"])
+    out = capsys.readouterr().out
+
+    report = json.loads(out)
+    ids = {f["control_id"] for f in report["findings"]}
+    assert "C18" in ids
+    assert rc == 1  # obsolete TLS / bad certs present
