@@ -5,6 +5,7 @@ from collections.abc import Sequence
 
 from probity.connectors.mock_idp import MockIdpConnector
 from probity.controls.base import Control
+from probity.controls.c19_access import C19Access
 from probity.controls.c20_mfa import C20Mfa
 from probity.engine.runner import Scan
 from probity.model.enums import Status
@@ -12,7 +13,7 @@ from probity.model.finding import Report
 from probity.report.json_report import to_json
 
 # Registry of active controls. New controls are appended here as they land.
-CONTROLS: list[Control] = [C20Mfa()]
+CONTROLS: list[Control] = [C19Access(), C20Mfa()]
 
 
 def build_parser() -> argparse.ArgumentParser:
