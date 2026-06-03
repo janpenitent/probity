@@ -26,7 +26,7 @@ Controls map NIS2 Article 21(2) measures to concrete technical checks.
 | C17 | 21(2)(h)        | Encryption at rest                        | cloud + DB config | HARD | planned |
 | C18 | 21(2)(h)        | Encryption in transit (healthy TLS)       | endpoint scan     | HARD | planned |
 | C19 | 21(2)(i)        | Access control: orphan & over-privileged  | IdP + HR          | HARD | planned |
-| C20 | 21(2)(j)        | Multi-factor authentication enforced      | IdP config        | HARD | in dev  |
+| C20 | 21(2)(j)        | Multi-factor authentication enforced      | IdP config        | HARD | done    |
 
 Implementation order favours high-pain + low-effort HARD controls first:
 C20, C19, C17, C06, C10, C03, C14, C18.
