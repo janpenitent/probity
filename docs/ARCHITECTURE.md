@@ -1,6 +1,6 @@
 # Architecture
 
-Probanza is a plugin pipeline. Each stage is replaceable and independently testable.
+Probity is a plugin pipeline. Each stage is replaceable and independently testable.
 
 ## Pipeline
 
@@ -10,7 +10,7 @@ Connector.collect() -> [Fact]  -->  FactSet  -->  Control.evaluate(FactSet) -> F
                                                           Scan aggregates -> Report -> reporters
 ```
 
-## Core types (`probanza.model`)
+## Core types (`probity.model`)
 
 - **Fact** — one immutable observation from a system: `kind`, `key`, `data`.
   Example kind: `identity.account`.
@@ -23,14 +23,14 @@ Connector.collect() -> [Fact]  -->  FactSet  -->  Control.evaluate(FactSet) -> F
 
 ## Extension points
 
-- **Connector** (`probanza.connectors.base.Connector`): `collect() -> Iterable[Fact]`.
+- **Connector** (`probity.connectors.base.Connector`): `collect() -> Iterable[Fact]`.
   Mirrors the UDS module/plugin pattern. Must not raise on empty source.
-- **Control** (`probanza.controls.base.Control`): `evaluate(FactSet) -> Finding`.
+- **Control** (`probity.controls.base.Control`): `evaluate(FactSet) -> Finding`.
   Pure: depends only on the facts, never on live I/O.
 
 ## Engine
 
-`probanza.engine.runner.Scan` wires connectors + controls. It isolates control
+`probity.engine.runner.Scan` wires connectors + controls. It isolates control
 failures: an exception inside a control becomes an `ERROR` finding instead of
 aborting the whole scan (no silent swallowing — the error is surfaced).
 

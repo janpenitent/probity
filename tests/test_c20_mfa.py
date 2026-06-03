@@ -1,7 +1,7 @@
-from probanza.connectors.mock_idp import ACCOUNT_KIND
-from probanza.controls.c20_mfa import C20Mfa
-from probanza.model.enums import Status
-from probanza.model.fact import Fact, FactSet
+from probity.connectors.mock_idp import ACCOUNT_KIND
+from probity.controls.c20_mfa import C20Mfa
+from probity.model.enums import Status
+from probity.model.fact import Fact, FactSet
 
 
 def _accounts(*specs: dict) -> FactSet:

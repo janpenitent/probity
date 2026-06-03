@@ -1,8 +1,8 @@
-from probanza.connectors.mock_idp import MockIdpConnector
-from probanza.controls.base import Control
-from probanza.model.enums import Severity, Status
-from probanza.model.fact import FactSet
-from probanza.model.finding import Finding
+from probity.connectors.mock_idp import MockIdpConnector
+from probity.controls.base import Control
+from probity.model.enums import Severity, Status
+from probity.model.fact import FactSet
+from probity.model.finding import Finding
 
 
 class _AlwaysPass(Control):
@@ -24,7 +24,7 @@ class _Boom(Control):
 
 
 def test_scan_runs_all_controls_over_collected_facts():
-    from probanza.engine.runner import Scan
+    from probity.engine.runner import Scan
 
     # Arrange
     scan = Scan([MockIdpConnector({"accounts": [{"id": "u1"}]})], [_AlwaysPass()])
@@ -39,7 +39,7 @@ def test_scan_runs_all_controls_over_collected_facts():
 
 
 def test_scan_isolates_control_errors_as_error_finding():
-    from probanza.engine.runner import Scan
+    from probity.engine.runner import Scan
 
     # Arrange
     scan = Scan([MockIdpConnector({})], [_AlwaysPass(), _Boom()])

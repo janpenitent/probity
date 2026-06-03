@@ -1,5 +1,5 @@
-from probanza.model.enums import Severity, Status
-from probanza.model.finding import Evidence, Finding, Report
+from probity.model.enums import Severity, Status
+from probity.model.finding import Evidence, Finding, Report
 
 
 def _finding(status: Status) -> Finding:

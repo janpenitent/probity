@@ -8,7 +8,7 @@ Core model, plugin engine, file-backed mock connector, CI, docs, licence.
 
 ## E1 — First vertical slice
 - C20 MFA control end-to-end (connector -> fact -> control -> finding -> CLI).
-- `probanza scan` CLI with text and JSON output.
+- `probity scan` CLI with text and JSON output.
 
 ## E2 — HARD control set (identity & data)
 - C19 orphan / over-privileged accounts.

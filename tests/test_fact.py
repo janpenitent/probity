@@ -1,4 +1,4 @@
-from probanza.model.fact import Fact, FactSet
+from probity.model.fact import Fact, FactSet
 
 
 def test_factset_filters_by_kind():

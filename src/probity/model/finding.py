@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Any
 
-from probanza.model.enums import Severity, Status
+from probity.model.enums import Severity, Status
 
 _SCORED = (Status.PASS, Status.FAIL, Status.PARTIAL)
 

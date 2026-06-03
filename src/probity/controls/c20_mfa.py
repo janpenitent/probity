@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from probanza.connectors.mock_idp import ACCOUNT_KIND
-from probanza.controls.base import Control
-from probanza.model.enums import Severity, Status
-from probanza.model.fact import Fact, FactSet
-from probanza.model.finding import Evidence, Finding
+from probity.connectors.mock_idp import ACCOUNT_KIND
+from probity.controls.base import Control
+from probity.model.enums import Severity, Status
+from probity.model.fact import Fact, FactSet
+from probity.model.finding import Evidence, Finding
 
 
 class C20Mfa(Control):

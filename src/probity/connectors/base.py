@@ -3,7 +3,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from collections.abc import Iterable
 
-from probanza.model.fact import Fact
+from probity.model.fact import Fact
 
 
 class Connector(ABC):

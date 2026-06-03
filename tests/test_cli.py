@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-from probanza.cli import main
+from probity.cli import main
 
 FIXTURE = str(Path(__file__).parent / "fixtures" / "idp_sample.json")
 

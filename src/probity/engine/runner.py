@@ -2,11 +2,11 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 
-from probanza.connectors.base import Connector
-from probanza.controls.base import Control
-from probanza.model.enums import Status
-from probanza.model.fact import Fact, FactSet
-from probanza.model.finding import Finding, Report
+from probity.connectors.base import Connector
+from probity.controls.base import Control
+from probity.model.enums import Status
+from probity.model.fact import Fact, FactSet
+from probity.model.finding import Finding, Report
 
 
 class Scan:

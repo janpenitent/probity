@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 
-from probanza.model.enums import Severity
-from probanza.model.fact import FactSet
-from probanza.model.finding import Finding
+from probity.model.enums import Severity
+from probity.model.fact import FactSet
+from probity.model.finding import Finding
 
 
 class Control(ABC):

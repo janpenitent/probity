@@ -3,13 +3,13 @@ from __future__ import annotations
 import argparse
 from collections.abc import Sequence
 
-from probanza.connectors.mock_idp import MockIdpConnector
-from probanza.controls.base import Control
-from probanza.controls.c20_mfa import C20Mfa
-from probanza.engine.runner import Scan
-from probanza.model.enums import Status
-from probanza.model.finding import Report
-from probanza.report.json_report import to_json
+from probity.connectors.mock_idp import MockIdpConnector
+from probity.controls.base import Control
+from probity.controls.c20_mfa import C20Mfa
+from probity.engine.runner import Scan
+from probity.model.enums import Status
+from probity.model.finding import Report
+from probity.report.json_report import to_json
 
 # Registry of active controls. New controls are appended here as they land.
 CONTROLS: list[Control] = [C20Mfa()]
@@ -17,7 +17,7 @@ CONTROLS: list[Control] = [C20Mfa()]
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        prog="probanza", description="Continuous NIS2 compliance evidence."
+        prog="probity", description="Continuous NIS2 compliance evidence."
     )
     sub = parser.add_subparsers(dest="command", required=True)
     scan = sub.add_parser("scan", help="Run controls against a source and emit findings.")
@@ -27,7 +27,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def _render_text(report: Report) -> str:
-    lines = [f"Probanza scan — score {report.score}%  {report.counts()}"]
+    lines = [f"Probity scan — score {report.score}%  {report.counts()}"]
     for finding in report.findings:
         lines.append(
             f"[{finding.status.value.upper():>14}] {finding.control_id} "

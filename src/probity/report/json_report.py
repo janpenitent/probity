@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 
-from probanza.model.finding import Report
+from probity.model.finding import Report
 
 
 def to_json(report: Report, *, indent: int = 2) -> str:

@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from probanza.connectors.mock_idp import ACCOUNT_KIND, MockIdpConnector
+from probity.connectors.mock_idp import ACCOUNT_KIND, MockIdpConnector
 
 FIXTURE = Path(__file__).parent / "fixtures" / "idp_sample.json"
 

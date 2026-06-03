@@ -5,8 +5,8 @@ from collections.abc import Iterable
 from pathlib import Path
 from typing import Any, cast
 
-from probanza.connectors.base import Connector
-from probanza.model.fact import Fact
+from probity.connectors.base import Connector
+from probity.model.fact import Fact
 
 ACCOUNT_KIND = "identity.account"
 

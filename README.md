@@ -1,21 +1,22 @@
-# Probanza
+# Probity
 
 **Continuous, auditable NIS2 compliance evidence. Open-core.**
 
-Probanza turns regulatory compliance from a once-a-year static document into
+Probity turns regulatory compliance from a once-a-year static document into
 **continuous machine-checked evidence**. It connects to the systems you already
 run (identity, cloud, backups, dependencies), evaluates them against concrete
 NIS2 technical controls, and produces audit-ready findings — every day, not once.
 
-> *Probanza* (Spanish, legal): the body of evidence that proves a fact in court.
-> That is exactly what this tool produces for your compliance posture.
+> *Probity* (English): proven integrity — honesty and correctness demonstrated
+> by evidence, not merely claimed. That is exactly what this tool produces for
+> your compliance posture: integrity you can prove on demand.
 
 ## Why
 
 EU regulation (NIS2, DORA, AI Act, CRA) now obliges thousands of mid-sized
 organisations to prove cybersecurity risk management. Today they prove it with
 consultants and spreadsheets: expensive, manual, and stale the day after the
-audit. Probanza closes that gap with **compliance-as-code**.
+audit. Probity closes that gap with **compliance-as-code**.
 
 ## How it works
 
@@ -33,7 +34,7 @@ independent unit, so coverage grows control by control.
 ```bash
 python -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
-probanza scan --source tests/fixtures/idp_sample.json
+probity scan --source tests/fixtures/idp_sample.json
 ```
 
 ## Status
