@@ -1,0 +1,9 @@
+{
+  "accounts": [
+    {"id": "u1", "display_name": "Alice Admin", "enabled": true,  "privileged": true,  "mfa_enabled": true,  "hr_active": true},
+    {"id": "u2", "display_name": "Bob User",    "enabled": true,  "privileged": false, "mfa_enabled": false, "hr_active": true},
+    {"id": "u3", "display_name": "Carol Ghost", "enabled": true,  "privileged": false, "mfa_enabled": true,  "hr_active": false},
+    {"id": "u4", "display_name": "Dave Root",   "enabled": true,  "privileged": true,  "mfa_enabled": false, "hr_active": true},
+    {"id": "u5", "display_name": "Eve Gone",    "enabled": false, "privileged": false, "mfa_enabled": false, "hr_active": false}
+  ]
+}
