@@ -1,0 +1,8 @@
+{
+  "volumes": [
+    {"id": "vol-db", "name": "prod-postgres", "encrypted": true, "kms": "managed", "contains_pii": true},
+    {"id": "vol-cache", "name": "redis", "encrypted": true, "contains_pii": false},
+    {"id": "vol-backup", "name": "nightly-dumps", "encrypted": false, "contains_pii": true},
+    {"id": "vol-scratch", "name": "tmp", "encrypted": false, "contains_pii": false}
+  ]
+}

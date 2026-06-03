@@ -25,4 +25,20 @@ def test_scan_json_emits_parseable_report(capsys):
     # Assert
     report = json.loads(out)
     assert "findings" in report
-    assert report["findings"][0]["control_id"] == "C20"
+    control_ids = {f["control_id"] for f in report["findings"]}
+    assert "C20" in control_ids
+
+
+def test_scan_with_cloud_source_includes_c17(capsys):
+    # Arrange / Act
+    from pathlib import Path
+
+    cloud = str(Path(FIXTURE).parent / "cloud_sample.json")
+    rc = main(["scan", "--source", FIXTURE, "--cloud", cloud, "--format", "json"])
+    out = capsys.readouterr().out
+
+    # Assert
+    report = json.loads(out)
+    ids = {f["control_id"] for f in report["findings"]}
+    assert "C17" in ids
+    assert rc == 1  # unencrypted volumes present
