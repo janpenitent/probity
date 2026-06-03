@@ -6,11 +6,11 @@ each with tests and green CI. TDD throughout.
 ## E0 — Foundation (done)
 Core model, plugin engine, file-backed mock connector, CI, docs, licence.
 
-## E1 — First vertical slice
+## E1 — First vertical slice (done)
 - C20 MFA control end-to-end (connector -> fact -> control -> finding -> CLI).
 - `probity scan` CLI with text and JSON output.
 
-## E2 — HARD control set (identity & data)
+## E2 — HARD control set (identity & data) (done)
 - C19 orphan / over-privileged accounts.
 - C17 encryption at rest, C18 TLS in transit.
 
