@@ -25,6 +25,7 @@ from probity.connectors.osv_connector import OsvConnector
 from probity.connectors.restic_connector import ResticConnector
 from probity.connectors.sslyze_connector import SslyzeConnector
 from probity.connectors.testssl_connector import TesttsslConnector
+from probity.connectors.trivy_connector import TrivyConnector
 from probity.connectors.veeam_connector import VeeamConnector
 from probity.controls.base import Control
 from probity.controls.c01_security_policy import C01SecurityPolicy
@@ -128,6 +129,7 @@ def _add_source_args(parser: argparse.ArgumentParser) -> None:
         "--assets",
         help="Path to asset-management JSON (assets + vulnscans + patches) for C02/C12/C14.",
     )
+    parser.add_argument("--trivy", help="Path to real Trivy --format json output for C12.")
     parser.add_argument(
         "--siem",
         help="Path to SIEM JSON (log sources + detection rules) for C03/C04.",
@@ -287,6 +289,8 @@ def _connectors_from_args(args: argparse.Namespace) -> list[Connector]:
         connectors.append(MockGovernanceConnector(args.governance))
     if args.assets:
         connectors.append(MockAssetsConnector(args.assets))
+    if args.trivy:
+        connectors.append(TrivyConnector(args.trivy))
     if args.siem:
         connectors.append(MockSiemConnector(args.siem))
     if args.pipeline:

@@ -187,6 +187,26 @@ def test_scan_with_governance_feeds_soft_controls(capsys, tmp_path):
     assert c15["status"] == "fail"
 
 
+def test_scan_with_trivy_feeds_c12(capsys, tmp_path):
+    # a real Trivy report with a recent CreatedAt should drive C12 to pass.
+    report = tmp_path / "trivy.json"
+    report.write_text(
+        json.dumps(
+            {
+                "SchemaVersion": 2,
+                "CreatedAt": "2099-01-01T00:00:00+00:00",
+                "ArtifactName": "prod-db:latest",
+                "ArtifactType": "container_image",
+                "Results": [],
+            }
+        )
+    )
+    main(["scan", "--source", FIXTURE, "--trivy", str(report), "--format", "json"])
+    out = capsys.readouterr().out
+    c12 = next(f for f in json.loads(out)["findings"] if f["control_id"] == "C12")
+    assert c12["status"] == "pass"
+
+
 def test_scan_with_hard_sources_feeds_all_hard_controls(capsys):
     # the healthy hard fixture should drive every HARD control to pass.
     main(
