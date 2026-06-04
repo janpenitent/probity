@@ -12,6 +12,7 @@ from probity.connectors.aws_monitoring_connector import AwsMonitoringConnector
 from probity.connectors.base import Connector
 from probity.connectors.cyclonedx_connector import CycloneDxConnector
 from probity.connectors.entra_connector import EntraConnector
+from probity.connectors.gcp_connector import GcpComputeConnector
 from probity.connectors.github_connector import GitHubConnector
 from probity.connectors.mock_assets import MockAssetsConnector
 from probity.connectors.mock_backup import MockBackupConnector
@@ -72,6 +73,17 @@ _AWS_ENV = {
     "region": "PROBITY_AWS_REGION",
 }
 _AWS_SESSION_TOKEN_ENV = "PROBITY_AWS_SESSION_TOKEN"
+
+# GCP credentials for the Compute Engine connector (C02/C17). A short-lived
+# OAuth2 access token (from `gcloud auth print-access-token` or Workload
+# Identity) and the target project are read from the environment only — never
+# CLI flags. A service-account key is not accepted: minting a token from one
+# needs RS256 JWT signing, which the stdlib cannot do without a crypto
+# dependency, breaking Probity's zero-dependency contract.
+_GCP_ENV = {
+    "access_token": "PROBITY_GCP_ACCESS_TOKEN",
+    "project": "PROBITY_GCP_PROJECT",
+}
 
 
 def _add_source_args(parser: argparse.ArgumentParser) -> None:
@@ -141,6 +153,15 @@ def _add_source_args(parser: argparse.ArgumentParser) -> None:
             f"AWS. Reads the same credentials as --aws ({_AWS_ENV['access_key']}, "
             f"{_AWS_ENV['secret_key']}, {_AWS_ENV['region']}, optional "
             f"{_AWS_SESSION_TOKEN_ENV})."
+        ),
+    )
+    parser.add_argument(
+        "--gcp",
+        action="store_true",
+        help=(
+            "Collect Compute Engine instances (C02) and persistent disks (C17) live "
+            f"from Google Cloud. Reads an OAuth2 access token from "
+            f"{_GCP_ENV['access_token']} and the project from {_GCP_ENV['project']}."
         ),
     )
 
@@ -298,6 +319,17 @@ def _aws_monitoring_from_env() -> AwsMonitoringConnector:
     )
 
 
+def _gcp_from_env() -> GcpComputeConnector:
+    """Build a GcpComputeConnector from the env vars, or fail clearly."""
+    creds: dict[str, str] = {}
+    for arg, var in _GCP_ENV.items():
+        value = os.environ.get(var)
+        if not value:
+            raise SystemExit(f"--gcp requires {var} to be set in the environment")
+        creds[arg] = value
+    return GcpComputeConnector(creds["access_token"], creds["project"])
+
+
 def _connectors_from_args(args: argparse.Namespace) -> list[Connector]:
     """Build the connector list from the shared source flags on ``args``.
 
@@ -351,6 +383,8 @@ def _connectors_from_args(args: argparse.Namespace) -> list[Connector]:
         connectors.append(_aws_from_env())
     if args.aws_monitoring:
         connectors.append(_aws_monitoring_from_env())
+    if args.gcp:
+        connectors.append(_gcp_from_env())
     return connectors
 
 
