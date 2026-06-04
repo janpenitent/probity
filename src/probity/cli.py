@@ -8,6 +8,7 @@ import os
 from collections.abc import Sequence
 
 from probity.connectors.aws_connector import AwsConnector
+from probity.connectors.aws_monitoring_connector import AwsMonitoringConnector
 from probity.connectors.base import Connector
 from probity.connectors.cyclonedx_connector import CycloneDxConnector
 from probity.connectors.entra_connector import EntraConnector
@@ -132,6 +133,16 @@ def _add_source_args(parser: argparse.ArgumentParser) -> None:
             f"{_AWS_ENV['region']} (and optional {_AWS_SESSION_TOKEN_ENV})."
         ),
     )
+    parser.add_argument(
+        "--aws-monitoring",
+        action="store_true",
+        help=(
+            "Collect CloudTrail logging (C03) and SSM patch state (C14) live from "
+            f"AWS. Reads the same credentials as --aws ({_AWS_ENV['access_key']}, "
+            f"{_AWS_ENV['secret_key']}, {_AWS_ENV['region']}, optional "
+            f"{_AWS_SESSION_TOKEN_ENV})."
+        ),
+    )
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -254,15 +265,32 @@ def _github_from_env() -> GitHubConnector:
     return GitHubConnector(token, os.environ.get(_GITHUB_ORG_ENV) or None)
 
 
-def _aws_from_env() -> AwsConnector:
-    """Build an AwsConnector from the credential env vars, or fail clearly."""
+def _aws_creds(flag: str) -> dict[str, str]:
+    """Read the shared AWS credential env vars, or fail clearly for ``flag``."""
     creds: dict[str, str] = {}
     for arg, var in _AWS_ENV.items():
         value = os.environ.get(var)
         if not value:
-            raise SystemExit(f"--aws requires {var} to be set in the environment")
+            raise SystemExit(f"{flag} requires {var} to be set in the environment")
         creds[arg] = value
+    return creds
+
+
+def _aws_from_env() -> AwsConnector:
+    """Build an AwsConnector from the credential env vars, or fail clearly."""
+    creds = _aws_creds("--aws")
     return AwsConnector(
+        creds["access_key"],
+        creds["secret_key"],
+        creds["region"],
+        session_token=os.environ.get(_AWS_SESSION_TOKEN_ENV) or None,
+    )
+
+
+def _aws_monitoring_from_env() -> AwsMonitoringConnector:
+    """Build an AwsMonitoringConnector from the credential env vars, or fail clearly."""
+    creds = _aws_creds("--aws-monitoring")
+    return AwsMonitoringConnector(
         creds["access_key"],
         creds["secret_key"],
         creds["region"],
@@ -321,6 +349,8 @@ def _connectors_from_args(args: argparse.Namespace) -> list[Connector]:
         connectors.append(MockTrainingConnector(args.training))
     if args.aws:
         connectors.append(_aws_from_env())
+    if args.aws_monitoring:
+        connectors.append(_aws_monitoring_from_env())
     return connectors
 
 
