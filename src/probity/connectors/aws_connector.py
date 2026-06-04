@@ -39,8 +39,6 @@ opens a socket and needs no credentials under test.
 
 from __future__ import annotations
 
-import hashlib
-import hmac
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -48,6 +46,7 @@ from collections.abc import Callable, Iterable
 from datetime import UTC, datetime
 from xml.etree import ElementTree
 
+from probity.connectors.aws_sigv4 import EMPTY_PAYLOAD_HASH, SigV4Signer
 from probity.connectors.base import Connector
 from probity.connectors.mock_assets import ASSET_KIND
 from probity.connectors.mock_cloud import STORAGE_KIND
@@ -55,10 +54,7 @@ from probity.model.fact import Fact
 
 _EC2_API_VERSION = "2016-11-15"
 _HTTP_TIMEOUT = 30.0
-_SIGV4_ALGORITHM = "AWS4-HMAC-SHA256"
 _SERVICE = "ec2"
-#: SHA-256 of the empty string — the payload hash for a body-less GET request.
-_EMPTY_PAYLOAD_HASH = hashlib.sha256(b"").hexdigest()
 
 #: Transport seam: ``(method, url, headers) -> raw response bytes``.
 #: The default implementation uses urllib; tests inject a fake.
@@ -103,12 +99,12 @@ class AwsConnector(Connector):
     ) -> None:
         if not (access_key and secret_key and region):
             raise ValueError("AwsConnector requires access_key, secret_key and region")
-        self._access_key = access_key
-        self._secret_key = secret_key
         self._region = region
-        self._session_token = session_token
         self._transport = transport or _urllib_transport
         self._now = now or (lambda: datetime.now(UTC))
+        self._signer = SigV4Signer(
+            access_key, secret_key, region, session_token=session_token, now=self._now
+        )
 
     # -- collection -------------------------------------------------------
 
@@ -155,61 +151,16 @@ class AwsConnector(Connector):
         host = f"{_SERVICE}.{self._region}.amazonaws.com"
         params = {"Action": action, "Version": _EC2_API_VERSION}
         query = urllib.parse.urlencode(sorted(params.items()))
-        headers = self._sign("GET", host, "/", query)
+        headers = self._signer.sign(
+            service=_SERVICE,
+            method="GET",
+            host=host,
+            path="/",
+            query=query,
+            payload_hash=EMPTY_PAYLOAD_HASH,
+        )
         raw = self._transport("GET", f"https://{host}/?{query}", headers)
         return ElementTree.fromstring(raw)
-
-    def _sign(self, method: str, host: str, path: str, query: str) -> dict[str, str]:
-        """Build the SigV4 ``Authorization`` and ``x-amz-*`` headers for a request."""
-        now = self._now().astimezone(UTC)
-        amz_date = now.strftime("%Y%m%dT%H%M%SZ")
-        date_stamp = now.strftime("%Y%m%d")
-
-        signed_headers = "host;x-amz-date"
-        canonical_headers = f"host:{host}\nx-amz-date:{amz_date}\n"
-        if self._session_token:
-            signed_headers = "host;x-amz-date;x-amz-security-token"
-            canonical_headers += f"x-amz-security-token:{self._session_token}\n"
-
-        canonical_request = "\n".join(
-            [method, path, query, canonical_headers, signed_headers, _EMPTY_PAYLOAD_HASH]
-        )
-        scope = f"{date_stamp}/{self._region}/{_SERVICE}/aws4_request"
-        string_to_sign = "\n".join(
-            [
-                _SIGV4_ALGORITHM,
-                amz_date,
-                scope,
-                hashlib.sha256(canonical_request.encode("utf-8")).hexdigest(),
-            ]
-        )
-        signing_key = _signing_key(self._secret_key, date_stamp, self._region, _SERVICE)
-        signature = hmac.new(
-            signing_key, string_to_sign.encode("utf-8"), hashlib.sha256
-        ).hexdigest()
-        authorization = (
-            f"{_SIGV4_ALGORITHM} Credential={self._access_key}/{scope}, "
-            f"SignedHeaders={signed_headers}, Signature={signature}"
-        )
-        headers = {"x-amz-date": amz_date, "Authorization": authorization}
-        if self._session_token:
-            headers["x-amz-security-token"] = self._session_token
-        return headers
-
-
-# -- SigV4 key derivation -------------------------------------------------
-
-
-def _hmac(key: bytes, msg: str) -> bytes:
-    return hmac.new(key, msg.encode("utf-8"), hashlib.sha256).digest()
-
-
-def _signing_key(secret: str, date_stamp: str, region: str, service: str) -> bytes:
-    """Derive the SigV4 signing key via the standard HMAC chain."""
-    k_date = _hmac(f"AWS4{secret}".encode(), date_stamp)
-    k_region = _hmac(k_date, region)
-    k_service = _hmac(k_region, service)
-    return _hmac(k_service, "aws4_request")
 
 
 # -- XML helpers (namespace-agnostic via local names) ---------------------
