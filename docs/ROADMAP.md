@@ -14,9 +14,9 @@ Core model, plugin engine, file-backed mock connector, CI, docs, licence.
 - C19 orphan / over-privileged accounts.
 - C17 encryption at rest, C18 TLS in transit.
 
-## E3 — HARD control set (resilience & supply chain)
+## E3 — HARD control set (resilience & supply chain) (done)
 - C06 backups recent, C07 restore-tested, C08 immutable copy.
-- C10 dependency CVEs (OSV feed), C09 SBOM.
+- C10 dependency CVEs (OSV feed), C09 SBOM present and current.
 
 ## E4 — Reporting
 - Evidence pack: JSON + HTML/PDF audit export, per-control history, trend score.
