@@ -10,6 +10,7 @@ from probity.connectors.mock_idp import MockIdpConnector
 from probity.connectors.mock_sbom import MockSbomConnector
 from probity.connectors.mock_sca import MockScaConnector
 from probity.connectors.mock_tls import MockTlsConnector
+from probity.connectors.osv_connector import OsvConnector
 from probity.controls.base import Control
 from probity.controls.c06_backups import C06Backups
 from probity.controls.c07_restore import C07Restore
@@ -53,6 +54,7 @@ def build_parser() -> argparse.ArgumentParser:
     scan.add_argument("--tls", help="Path to TLS endpoint source JSON (mock_tls).")
     scan.add_argument("--backup", help="Path to backup-jobs source JSON (mock_backup).")
     scan.add_argument("--sca", help="Path to dependency/CVE source JSON (mock_sca).")
+    scan.add_argument("--osv", help="Path to real osv-scanner --format json output.")
     scan.add_argument("--sbom", help="Path to SBOM component source JSON (mock_sbom).")
     scan.add_argument("--format", choices=["text", "json", "html", "pdf"], default="text")
     scan.add_argument(
@@ -132,6 +134,7 @@ def _run_scan(
     fmt: str,
     history: str | None = None,
     out: str | None = None,
+    osv: str | None = None,
 ) -> int:
     connectors: list[Connector] = [MockIdpConnector(source)]
     if cloud:
@@ -142,6 +145,8 @@ def _run_scan(
         connectors.append(MockBackupConnector(backup))
     if sca:
         connectors.append(MockScaConnector(sca))
+    if osv:
+        connectors.append(OsvConnector(osv))
     if sbom:
         connectors.append(MockSbomConnector(sbom))
     report = Scan(connectors, CONTROLS).run()
@@ -159,7 +164,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     if args.command == "scan":
         return _run_scan(
             args.source, args.cloud, args.tls, args.backup, args.sca, args.sbom,
-            args.format, args.history, args.out,
+            args.format, args.history, args.out, args.osv,
         )
     return 2
 
