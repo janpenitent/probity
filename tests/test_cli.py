@@ -7,6 +7,7 @@ from pathlib import Path
 from probity.cli import main
 
 FIXTURE = str(Path(__file__).parent / "fixtures" / "idp_sample.json")
+HARD_FIXTURE = str(Path(__file__).parent / "fixtures" / "hard_sample.json")
 
 
 def test_scan_text_returns_nonzero_when_a_control_fails(capsys):
@@ -184,3 +185,28 @@ def test_scan_with_governance_feeds_soft_controls(capsys, tmp_path):
     assert c01["requires_human_validation"] is True
     c15 = next(f for f in report["findings"] if f["control_id"] == "C15")
     assert c15["status"] == "fail"
+
+
+def test_scan_with_hard_sources_feeds_all_hard_controls(capsys):
+    # the healthy hard fixture should drive every HARD control to pass.
+    main(
+        [
+            "scan",
+            "--source",
+            FIXTURE,
+            "--assets",
+            HARD_FIXTURE,
+            "--siem",
+            HARD_FIXTURE,
+            "--pipeline",
+            HARD_FIXTURE,
+            "--training",
+            HARD_FIXTURE,
+            "--format",
+            "json",
+        ]
+    )
+    report = json.loads(capsys.readouterr().out)
+    by_id = {f["control_id"]: f for f in report["findings"]}
+    for cid in ("C02", "C03", "C04", "C12", "C13", "C14", "C16"):
+        assert by_id[cid]["status"] == "pass", cid

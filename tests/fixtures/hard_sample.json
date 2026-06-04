@@ -1,0 +1,26 @@
+{
+  "assets": [
+    {"id": "vm-1", "name": "prod-db", "type": "vm", "managed": true, "last_seen": "2026-06-03T12:00:00+00:00"},
+    {"id": "vm-2", "name": "prod-web", "type": "vm", "managed": true, "last_seen": "2026-06-04T06:00:00+00:00"}
+  ],
+  "vulnscans": [
+    {"id": "vm-1", "asset": "prod-db", "critical": true, "last_scan": "2026-05-20T00:00:00+00:00", "scanner": "nessus"},
+    {"id": "vm-2", "asset": "prod-web", "critical": false, "last_scan": "2026-01-01T00:00:00+00:00", "scanner": "nessus"}
+  ],
+  "patches": [
+    {"id": "vm-1", "host": "prod-db", "critical": true, "last_patched": "2026-05-28T00:00:00+00:00", "pending_critical": 0}
+  ],
+  "log_sources": [
+    {"id": "src-1", "asset": "prod-db", "critical": true, "forwarding": true, "last_event": "2026-06-04T06:00:00+00:00"}
+  ],
+  "detection_rules": [
+    {"id": "rule-1", "name": "Impossible travel", "enabled": true, "last_tested": "2026-04-01T00:00:00+00:00"}
+  ],
+  "pipelines": [
+    {"id": "repo-app", "repo": "org/app", "sast_enabled": true, "secret_scanning_enabled": true}
+  ],
+  "training": [
+    {"id": "u-1", "person": "Alice", "required": true, "completed_at": "2026-02-01T00:00:00+00:00"},
+    {"id": "u-2", "person": "Bob", "required": false, "completed_at": null}
+  ]
+}

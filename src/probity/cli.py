@@ -10,13 +10,17 @@ from collections.abc import Sequence
 from probity.connectors.base import Connector
 from probity.connectors.cyclonedx_connector import CycloneDxConnector
 from probity.connectors.entra_connector import EntraConnector
+from probity.connectors.mock_assets import MockAssetsConnector
 from probity.connectors.mock_backup import MockBackupConnector
 from probity.connectors.mock_cloud import MockCloudConnector
 from probity.connectors.mock_governance import MockGovernanceConnector
 from probity.connectors.mock_idp import MockIdpConnector
+from probity.connectors.mock_pipeline import MockPipelineConnector
 from probity.connectors.mock_sbom import MockSbomConnector
 from probity.connectors.mock_sca import MockScaConnector
+from probity.connectors.mock_siem import MockSiemConnector
 from probity.connectors.mock_tls import MockTlsConnector
+from probity.connectors.mock_training import MockTrainingConnector
 from probity.connectors.osv_connector import OsvConnector
 from probity.connectors.restic_connector import ResticConnector
 from probity.connectors.sslyze_connector import SslyzeConnector
@@ -24,6 +28,9 @@ from probity.connectors.testssl_connector import TesttsslConnector
 from probity.connectors.veeam_connector import VeeamConnector
 from probity.controls.base import Control
 from probity.controls.c01_security_policy import C01SecurityPolicy
+from probity.controls.c02_asset_inventory import C02AssetInventory
+from probity.controls.c03_logging import C03Logging
+from probity.controls.c04_detection import C04Detection
 from probity.controls.c05_incident_procedure import C05IncidentProcedure
 from probity.controls.c06_backups import C06Backups
 from probity.controls.c07_restore import C07Restore
@@ -31,7 +38,11 @@ from probity.controls.c08_immutable import C08Immutable
 from probity.controls.c09_sbom import C09Sbom
 from probity.controls.c10_cves import C10Cves
 from probity.controls.c11_supplier_risk import C11SupplierRisk
+from probity.controls.c12_vuln_scanning import C12VulnScanning
+from probity.controls.c13_cicd_security import C13CicdSecurity
+from probity.controls.c14_patch_management import C14PatchManagement
 from probity.controls.c15_disclosure import C15Disclosure
+from probity.controls.c16_training import C16Training
 from probity.controls.c17_encryption import C17Encryption
 from probity.controls.c18_tls import C18Tls
 from probity.controls.c19_access import C19Access
@@ -50,6 +61,9 @@ from probity.service.scheduler import AlertSinks, ScanScheduler
 # Registry of active controls. New controls are appended here as they land.
 CONTROLS: list[Control] = [
     C01SecurityPolicy(),
+    C02AssetInventory(),
+    C03Logging(),
+    C04Detection(),
     C05IncidentProcedure(),
     C06Backups(),
     C07Restore(),
@@ -57,7 +71,11 @@ CONTROLS: list[Control] = [
     C09Sbom(),
     C10Cves(),
     C11SupplierRisk(),
+    C12VulnScanning(),
+    C13CicdSecurity(),
+    C14PatchManagement(),
     C15Disclosure(),
+    C16Training(),
     C17Encryption(),
     C18Tls(),
     C19Access(),
@@ -106,6 +124,16 @@ def _add_source_args(parser: argparse.ArgumentParser) -> None:
         "--governance",
         help="Path to governance records JSON (documents + suppliers) for SOFT controls.",
     )
+    parser.add_argument(
+        "--assets",
+        help="Path to asset-management JSON (assets + vulnscans + patches) for C02/C12/C14.",
+    )
+    parser.add_argument(
+        "--siem",
+        help="Path to SIEM JSON (log sources + detection rules) for C03/C04.",
+    )
+    parser.add_argument("--pipeline", help="Path to CI/CD pipeline config JSON for C13.")
+    parser.add_argument("--training", help="Path to HR/LMS training records JSON for C16.")
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -257,6 +285,14 @@ def _connectors_from_args(args: argparse.Namespace) -> list[Connector]:
         connectors.append(CycloneDxConnector(args.cyclonedx))
     if args.governance:
         connectors.append(MockGovernanceConnector(args.governance))
+    if args.assets:
+        connectors.append(MockAssetsConnector(args.assets))
+    if args.siem:
+        connectors.append(MockSiemConnector(args.siem))
+    if args.pipeline:
+        connectors.append(MockPipelineConnector(args.pipeline))
+    if args.training:
+        connectors.append(MockTrainingConnector(args.training))
     return connectors
 
 
