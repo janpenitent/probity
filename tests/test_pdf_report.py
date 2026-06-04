@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 Janier Rodríguez
+
 from datetime import UTC, datetime
 
 from probity.model.enums import Severity, Status

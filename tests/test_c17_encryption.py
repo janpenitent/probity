@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 Janier Rodríguez
+
 from probity.connectors.mock_cloud import STORAGE_KIND
 from probity.controls.c17_encryption import C17Encryption
 from probity.model.enums import Status

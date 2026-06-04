@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 Janier Rodríguez
+
 """Self-contained HTML evidence pack.
 
 Renders a :class:`Report` to a single standalone HTML document with inlined

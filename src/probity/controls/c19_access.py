@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 Janier Rodríguez
+
 """C19 — Access control: orphan / stale-privilege accounts (NIS2 Art.21(2)(i))."""
 
 from __future__ import annotations

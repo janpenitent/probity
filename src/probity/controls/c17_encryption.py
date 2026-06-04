@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 Janier Rodríguez
+
 """C17 — Encryption of data at rest (NIS2 Art.21(2)(h))."""
 
 from __future__ import annotations

@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 Janier Rodríguez
+
 """Real TLS connector backed by ``testssl.sh --jsonfile`` output.
 
 Unlike :class:`~probity.connectors.mock_tls.MockTlsConnector`, this reads the

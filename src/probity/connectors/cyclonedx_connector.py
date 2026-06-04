@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 Janier Rodríguez
+
 """Real SBOM connector backed by a CycloneDX JSON bill of materials.
 
 Unlike :class:`~probity.connectors.mock_sbom.MockSbomConnector`, this reads an

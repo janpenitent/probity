@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 Janier Rodríguez
+
 """Real backup connector backed by ``restic snapshots --json`` output.
 
 restic is a free, offline backup tool whose snapshot listing is JSON-native, so

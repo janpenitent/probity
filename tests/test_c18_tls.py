@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 Janier Rodríguez
+
 from probity.connectors.mock_tls import TLS_KIND
 from probity.controls.c18_tls import C18Tls
 from probity.model.enums import Status

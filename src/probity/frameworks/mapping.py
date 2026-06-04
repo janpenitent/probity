@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 Janier Rodríguez
+
 """Cross-framework references and per-framework coverage.
 
 Each Probity control already carries its NIS2 article reference. The same
