@@ -128,15 +128,38 @@ def test_pagination_pages_until_short_page(monkeypatch):
     def transport(method: str, url: str, headers: dict[str, str]) -> Any:
         if "code-scanning/analyses" in url:
             return [{"id": 1}]
-        if "page=1" in url or "page=2" in url:
+        # Anchor on "&page=" so the per_page=2 query param cannot collide with
+        # the page=2 match (substring "page=2" lives inside "per_page=2").
+        if "&page=1" in url or "&page=2" in url:
             return page_full  # two full pages -> connector keeps paging
-        if "page=3" in url:
+        if "&page=3" in url:
             return page_short  # short page -> stop
         return []
 
     conn = GitHubConnector(token="t", org="org", transport=transport)
     keys = {f.key for f in conn.collect()}
     assert keys == {"org/a", "org/b", "org/c"}
+
+
+def test_pagination_raises_when_no_short_page(monkeypatch):
+    # A misbehaving API that never returns a short page must not hang the scan:
+    # _list is capped at _MAX_PAGES and raises instead of looping forever.
+    monkeypatch.setattr(github_connector, "_PAGE_SIZE", 2)
+    monkeypatch.setattr(github_connector, "_MAX_PAGES", 3)
+    sa = {"secret_scanning": {"status": "enabled"}}
+    always_full = [
+        {"full_name": "org/a", "security_and_analysis": sa},
+        {"full_name": "org/b", "security_and_analysis": sa},
+    ]
+
+    def transport(method: str, url: str, headers: dict[str, str]) -> Any:
+        if "code-scanning/analyses" in url:
+            return [{"id": 1}]
+        return always_full  # full page on every page -> short page never arrives
+
+    conn = GitHubConnector(token="t", org="org", transport=transport)
+    with pytest.raises(GitHubError, match="exceeded 3 pages"):
+        list(conn.collect())
 
 
 def test_feeds_c13_unchanged():
