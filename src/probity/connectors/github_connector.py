@@ -49,6 +49,9 @@ _API_BASE = "https://api.github.com"
 _API_VERSION = "2022-11-28"
 _PAGE_SIZE = 100
 _HTTP_TIMEOUT = 30.0
+#: Hard cap on pagination so a misbehaving API that never returns a short page
+#: cannot hang an autonomous scan. 1000 pages * _PAGE_SIZE = 100k items.
+_MAX_PAGES = 1000
 
 #: Transport seam: ``(method, url, headers) -> parsed JSON (list or dict)``.
 #: The default implementation uses urllib; tests inject a fake.
@@ -111,8 +114,7 @@ class GitHubConnector(Connector):
     def _list(self, path: str) -> list[dict[str, Any]]:
         """GET a REST collection, paging until the first short page."""
         items: list[dict[str, Any]] = []
-        page = 1
-        while True:
+        for page in range(1, _MAX_PAGES + 1):
             sep = "&" if "?" in path else "?"
             data = self._get(f"{path}{sep}per_page={_PAGE_SIZE}&page={page}")
             if not isinstance(data, list) or not data:
@@ -120,7 +122,9 @@ class GitHubConnector(Connector):
             items.extend(d for d in data if isinstance(d, dict))
             if len(data) < _PAGE_SIZE:
                 break
-            page += 1
+        else:
+            # Loop exhausted without a short page: the API is misbehaving.
+            raise GitHubError(0, f"pagination exceeded {_MAX_PAGES} pages for {path}")
         return items
 
     # -- collection -------------------------------------------------------
