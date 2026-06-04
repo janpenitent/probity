@@ -69,6 +69,12 @@ export PROBITY_ENTRA_TENANT_ID=... PROBITY_ENTRA_CLIENT_ID=... PROBITY_ENTRA_CLI
 probity scan --entra --format json
 ```
 
+The first **SOFT** controls (C01/C05/C11/C15) reason over governance artifacts —
+policies, procedures, supplier risk assessments — via `--governance gov.json`.
+They are honest about automation's limit: a missing or overdue artifact is a hard
+`FAIL`, but a present, current one is `PARTIAL` flagged `requires_human_validation`
+(never an auto-PASS) so an auditor still judges the content.
+
 ## Zero runtime dependencies
 
 The core ships with `dependencies = []`. Scheduling uses stdlib `threading`,
@@ -78,10 +84,12 @@ stdlib `http.server` with hand-built inline SVG, and alert webhooks use
 
 ## Status
 
-Pre-alpha. The deterministic (HARD) control set is implemented end-to-end:
-9 controls (C06–C10, C17–C20), JSON/HTML/PDF reporting, history + trend,
-scheduled `watch`, a `serve` dashboard, regression alerts, and DORA / EU AI Act
-cross-framework mapping. See [docs/ROADMAP.md](docs/ROADMAP.md) and
+Pre-alpha. 13 of 20 controls are implemented end-to-end: the HARD set
+(C06–C10, C17–C20) plus the first SOFT set (C01, C05, C11, C15) with the
+human-validation flag. Also JSON/HTML/PDF reporting, history + trend, scheduled
+`watch`, a `serve` dashboard, regression alerts, a live Entra ID connector, and
+DORA / EU AI Act cross-framework mapping. Remaining HARD controls (C02–C04,
+C12–C14, C16) are next. See [docs/ROADMAP.md](docs/ROADMAP.md) and
 [docs/CONTROLS.md](docs/CONTROLS.md).
 
 ## Licensing
