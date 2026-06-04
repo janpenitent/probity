@@ -10,6 +10,7 @@ from collections.abc import Sequence
 from probity.connectors.base import Connector
 from probity.connectors.cyclonedx_connector import CycloneDxConnector
 from probity.connectors.entra_connector import EntraConnector
+from probity.connectors.github_connector import GitHubConnector
 from probity.connectors.mock_assets import MockAssetsConnector
 from probity.connectors.mock_backup import MockBackupConnector
 from probity.connectors.mock_cloud import MockCloudConnector
@@ -93,6 +94,13 @@ _ENTRA_ENV = {
     "client_secret": "PROBITY_ENTRA_CLIENT_SECRET",
 }
 
+# GitHub access token (required) and optional org scope for the C13 connector.
+# The token is read from the environment only — never a CLI flag — so it cannot
+# leak into shell history or process listings. PROBITY_GITHUB_ORG is optional:
+# unset scans the token user's own repos.
+_GITHUB_TOKEN_ENV = "PROBITY_GITHUB_TOKEN"
+_GITHUB_ORG_ENV = "PROBITY_GITHUB_ORG"
+
 
 def _add_source_args(parser: argparse.ArgumentParser) -> None:
     """Attach the shared connector-source flags used by ``scan`` and ``watch``.
@@ -135,6 +143,14 @@ def _add_source_args(parser: argparse.ArgumentParser) -> None:
         help="Path to SIEM JSON (log sources + detection rules) for C03/C04.",
     )
     parser.add_argument("--pipeline", help="Path to CI/CD pipeline config JSON for C13.")
+    parser.add_argument(
+        "--github",
+        action="store_true",
+        help=(
+            "Collect pipeline security live from GitHub for C13. Reads the access token "
+            f"from {_GITHUB_TOKEN_ENV} and an optional org from {_GITHUB_ORG_ENV}."
+        ),
+    )
     parser.add_argument("--training", help="Path to HR/LMS training records JSON for C16.")
 
 
@@ -250,6 +266,14 @@ def _entra_from_env() -> EntraConnector:
     return EntraConnector(creds["tenant_id"], creds["client_id"], creds["client_secret"])
 
 
+def _github_from_env() -> GitHubConnector:
+    """Build a GitHubConnector from the token env var, or fail clearly."""
+    token = os.environ.get(_GITHUB_TOKEN_ENV)
+    if not token:
+        raise SystemExit(f"--github requires {_GITHUB_TOKEN_ENV} to be set in the environment")
+    return GitHubConnector(token, os.environ.get(_GITHUB_ORG_ENV) or None)
+
+
 def _connectors_from_args(args: argparse.Namespace) -> list[Connector]:
     """Build the connector list from the shared source flags on ``args``.
 
@@ -295,6 +319,8 @@ def _connectors_from_args(args: argparse.Namespace) -> list[Connector]:
         connectors.append(MockSiemConnector(args.siem))
     if args.pipeline:
         connectors.append(MockPipelineConnector(args.pipeline))
+    if args.github:
+        connectors.append(_github_from_env())
     if args.training:
         connectors.append(MockTrainingConnector(args.training))
     return connectors
