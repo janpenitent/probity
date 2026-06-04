@@ -4,6 +4,7 @@ import argparse
 from collections.abc import Sequence
 
 from probity.connectors.base import Connector
+from probity.connectors.cyclonedx_connector import CycloneDxConnector
 from probity.connectors.mock_backup import MockBackupConnector
 from probity.connectors.mock_cloud import MockCloudConnector
 from probity.connectors.mock_idp import MockIdpConnector
@@ -56,6 +57,7 @@ def build_parser() -> argparse.ArgumentParser:
     scan.add_argument("--sca", help="Path to dependency/CVE source JSON (mock_sca).")
     scan.add_argument("--osv", help="Path to real osv-scanner --format json output.")
     scan.add_argument("--sbom", help="Path to SBOM component source JSON (mock_sbom).")
+    scan.add_argument("--cyclonedx", help="Path to a real CycloneDX JSON BOM.")
     scan.add_argument("--format", choices=["text", "json", "html", "pdf"], default="text")
     scan.add_argument(
         "--out",
@@ -135,6 +137,7 @@ def _run_scan(
     history: str | None = None,
     out: str | None = None,
     osv: str | None = None,
+    cyclonedx: str | None = None,
 ) -> int:
     connectors: list[Connector] = [MockIdpConnector(source)]
     if cloud:
@@ -149,6 +152,8 @@ def _run_scan(
         connectors.append(OsvConnector(osv))
     if sbom:
         connectors.append(MockSbomConnector(sbom))
+    if cyclonedx:
+        connectors.append(CycloneDxConnector(cyclonedx))
     report = Scan(connectors, CONTROLS).run()
     _emit(report, fmt, out)
     if history:
@@ -164,7 +169,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     if args.command == "scan":
         return _run_scan(
             args.source, args.cloud, args.tls, args.backup, args.sca, args.sbom,
-            args.format, args.history, args.out, args.osv,
+            args.format, args.history, args.out, args.osv, args.cyclonedx,
         )
     return 2
 
