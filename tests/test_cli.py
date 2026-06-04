@@ -132,3 +132,27 @@ def test_scan_with_all_frameworks_prints_every_view(capsys):
     assert "NIS2 Directive" in out
     assert "DORA Regulation" in out
     assert "EU AI Act" in out
+
+
+def test_scan_without_identity_source_errors():
+    try:
+        main(["scan", "--cloud", str(Path(FIXTURE).parent / "cloud_sample.json")])
+    except SystemExit as exc:
+        assert "identity source" in str(exc.code)
+    else:  # pragma: no cover - guard against silent success
+        raise AssertionError("expected SystemExit when no identity source is given")
+
+
+def test_scan_entra_without_env_errors(monkeypatch):
+    for var in (
+        "PROBITY_ENTRA_TENANT_ID",
+        "PROBITY_ENTRA_CLIENT_ID",
+        "PROBITY_ENTRA_CLIENT_SECRET",
+    ):
+        monkeypatch.delenv(var, raising=False)
+    try:
+        main(["scan", "--entra"])
+    except SystemExit as exc:
+        assert "PROBITY_ENTRA_TENANT_ID" in str(exc.code)
+    else:  # pragma: no cover - guard against silent success
+        raise AssertionError("expected SystemExit when Entra env vars are unset")
