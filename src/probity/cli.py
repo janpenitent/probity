@@ -12,8 +12,10 @@ from probity.connectors.mock_sbom import MockSbomConnector
 from probity.connectors.mock_sca import MockScaConnector
 from probity.connectors.mock_tls import MockTlsConnector
 from probity.connectors.osv_connector import OsvConnector
+from probity.connectors.restic_connector import ResticConnector
 from probity.connectors.sslyze_connector import SslyzeConnector
 from probity.connectors.testssl_connector import TesttsslConnector
+from probity.connectors.veeam_connector import VeeamConnector
 from probity.controls.base import Control
 from probity.controls.c06_backups import C06Backups
 from probity.controls.c07_restore import C07Restore
@@ -58,6 +60,8 @@ def build_parser() -> argparse.ArgumentParser:
     scan.add_argument("--testssl", help="Path to real testssl.sh --jsonfile output.")
     scan.add_argument("--sslyze", help="Path to real sslyze --json_out output.")
     scan.add_argument("--backup", help="Path to backup-jobs source JSON (mock_backup).")
+    scan.add_argument("--veeam", help="Path to real Veeam B&R job-report JSON.")
+    scan.add_argument("--restic", help="Path to real restic snapshots --json output.")
     scan.add_argument("--sca", help="Path to dependency/CVE source JSON (mock_sca).")
     scan.add_argument("--osv", help="Path to real osv-scanner --format json output.")
     scan.add_argument("--sbom", help="Path to SBOM component source JSON (mock_sbom).")
@@ -144,6 +148,8 @@ def _run_scan(
     cyclonedx: str | None = None,
     testssl: str | None = None,
     sslyze: str | None = None,
+    veeam: str | None = None,
+    restic: str | None = None,
 ) -> int:
     connectors: list[Connector] = [MockIdpConnector(source)]
     if cloud:
@@ -156,6 +162,10 @@ def _run_scan(
         connectors.append(SslyzeConnector(sslyze))
     if backup:
         connectors.append(MockBackupConnector(backup))
+    if veeam:
+        connectors.append(VeeamConnector(veeam))
+    if restic:
+        connectors.append(ResticConnector(restic))
     if sca:
         connectors.append(MockScaConnector(sca))
     if osv:
@@ -180,7 +190,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _run_scan(
             args.source, args.cloud, args.tls, args.backup, args.sca, args.sbom,
             args.format, args.history, args.out, args.osv, args.cyclonedx,
-            args.testssl, args.sslyze,
+            args.testssl, args.sslyze, args.veeam, args.restic,
         )
     return 2
 

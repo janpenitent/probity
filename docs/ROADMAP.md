@@ -28,7 +28,8 @@ Strategy: ingest real exports of free offline tools (no live credentials).
 - [x] E5b CycloneDxConnector — real CycloneDX JSON BOM -> C09 (`--cyclonedx`).
 - [x] E5c TesttsslConnector + SslyzeConnector — testssl.sh / sslyze JSON ->
   C18 (`--testssl`, `--sslyze`).
-- [ ] real backup-vendor export -> C06/07/08.
+- [x] E5d VeeamConnector (C06/07/08) + ResticConnector (C06) — real
+  backup-vendor exports (`--veeam`, `--restic`).
 - Later (live APIs): Microsoft Entra ID / LDAP (identity), Azure + AWS config
   (encryption, assets), SIEM (logging), backup vendors.
 
