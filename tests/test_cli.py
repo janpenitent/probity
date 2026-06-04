@@ -192,6 +192,17 @@ def test_scan_aws_monitoring_without_env_errors(monkeypatch):
         raise AssertionError("expected SystemExit when AWS env vars are unset")
 
 
+def test_scan_gcp_without_env_errors(monkeypatch):
+    for var in ("PROBITY_GCP_ACCESS_TOKEN", "PROBITY_GCP_PROJECT"):
+        monkeypatch.delenv(var, raising=False)
+    try:
+        main(["scan", "--source", "missing.json", "--gcp"])
+    except SystemExit as exc:
+        assert "PROBITY_GCP_ACCESS_TOKEN" in str(exc.code)
+    else:  # pragma: no cover - guard against silent success
+        raise AssertionError("expected SystemExit when GCP env vars are unset")
+
+
 def test_scan_with_governance_feeds_soft_controls(capsys, tmp_path):
     # a current security policy makes C01 partial (pending human validation),
     # never an auto-pass; an absent disclosure policy fails C15.
