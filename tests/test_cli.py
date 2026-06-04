@@ -55,3 +55,21 @@ def test_scan_with_tls_source_includes_c18(capsys):
     ids = {f["control_id"] for f in report["findings"]}
     assert "C18" in ids
     assert rc == 1  # obsolete TLS / bad certs present
+
+
+def test_history_records_snapshot_and_reports_trend(capsys, tmp_path):
+    store = str(tmp_path / "history.jsonl")
+
+    # First scan: no prior history -> "first recorded scan"
+    main(["scan", "--source", FIXTURE, "--history", store])
+    first = capsys.readouterr().out
+    assert "first recorded scan" in first.lower()
+
+    # Second scan against the same store -> trend line vs previous
+    main(["scan", "--source", FIXTURE, "--history", store])
+    second = capsys.readouterr().out
+    assert "trend" in second.lower()
+    assert "vs previous" in second.lower()
+
+    # Store is append-only: two lines recorded
+    assert len(Path(store).read_text().splitlines()) == 2

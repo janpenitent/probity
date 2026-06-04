@@ -18,8 +18,9 @@ Core model, plugin engine, file-backed mock connector, CI, docs, licence.
 - C06 backups recent, C07 restore-tested, C08 immutable copy.
 - C10 dependency CVEs (OSV feed), C09 SBOM present and current.
 
-## E4 — Reporting
-- Evidence pack: JSON + HTML/PDF audit export, per-control history, trend score.
+## E4 — Reporting (in progress)
+- Evidence pack: JSON + HTML audit export (done), per-control history + trend score (done).
+- PDF export pending.
 
 ## E5 — Real connectors
 - Microsoft Entra ID / LDAP (identity), Azure + AWS config (encryption, assets),

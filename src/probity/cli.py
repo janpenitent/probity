@@ -23,6 +23,7 @@ from probity.controls.c20_mfa import C20Mfa
 from probity.engine.runner import Scan
 from probity.model.enums import Status
 from probity.model.finding import Report
+from probity.report.history import Trend, append_snapshot, compute_trend, load_snapshots
 from probity.report.html_report import to_html
 from probity.report.json_report import to_json
 
@@ -53,6 +54,10 @@ def build_parser() -> argparse.ArgumentParser:
     scan.add_argument("--sca", help="Path to dependency/CVE source JSON (mock_sca).")
     scan.add_argument("--sbom", help="Path to SBOM component source JSON (mock_sbom).")
     scan.add_argument("--format", choices=["text", "json", "html"], default="text")
+    scan.add_argument(
+        "--history",
+        help="Append-only JSONL store; records this scan and reports the score trend.",
+    )
     return parser
 
 
@@ -66,6 +71,20 @@ def _render_text(report: Report) -> str:
         for ev in finding.evidence:
             lines.append(f"    - {ev.description} ({len(ev.items)} items)")
     return "\n".join(lines)
+
+
+_TREND_ARROW = {"up": "▲", "down": "▼", "flat": "▬", "first": "•"}
+
+
+def _render_trend(trend: Trend) -> str:
+    arrow = _TREND_ARROW[trend.direction]
+    if trend.previous is None:
+        return f"Trend {arrow} first recorded scan — score {trend.current}%."
+    sign = "+" if trend.delta >= 0 else ""
+    return (
+        f"Trend {arrow} {trend.direction} — score {trend.current}% "
+        f"({sign}{trend.delta} vs previous {trend.previous}%)."
+    )
 
 
 def _render(report: Report, fmt: str) -> str:
@@ -84,6 +103,7 @@ def _run_scan(
     sca: str | None,
     sbom: str | None,
     fmt: str,
+    history: str | None = None,
 ) -> int:
     connectors: list[Connector] = [MockIdpConnector(source)]
     if cloud:
@@ -98,6 +118,10 @@ def _run_scan(
         connectors.append(MockSbomConnector(sbom))
     report = Scan(connectors, CONTROLS).run()
     print(_render(report, fmt))
+    if history:
+        append_snapshot(report, history)
+        trend = compute_trend(load_snapshots(history))
+        print(_render_trend(trend))
     failed = any(f.status is Status.FAIL for f in report.findings)
     return 1 if failed else 0
 
@@ -107,7 +131,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     if args.command == "scan":
         return _run_scan(
             args.source, args.cloud, args.tls, args.backup, args.sca, args.sbom,
-            args.format,
+            args.format, args.history,
         )
     return 2
 
