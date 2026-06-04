@@ -26,6 +26,7 @@ from probity.model.finding import Report
 from probity.report.history import Trend, append_snapshot, compute_trend, load_snapshots
 from probity.report.html_report import to_html
 from probity.report.json_report import to_json
+from probity.report.pdf_report import to_pdf
 
 # Registry of active controls. New controls are appended here as they land.
 CONTROLS: list[Control] = [
@@ -53,7 +54,11 @@ def build_parser() -> argparse.ArgumentParser:
     scan.add_argument("--backup", help="Path to backup-jobs source JSON (mock_backup).")
     scan.add_argument("--sca", help="Path to dependency/CVE source JSON (mock_sca).")
     scan.add_argument("--sbom", help="Path to SBOM component source JSON (mock_sbom).")
-    scan.add_argument("--format", choices=["text", "json", "html"], default="text")
+    scan.add_argument("--format", choices=["text", "json", "html", "pdf"], default="text")
+    scan.add_argument(
+        "--out",
+        help="Write the report to this file instead of stdout (required for --format pdf).",
+    )
     scan.add_argument(
         "--history",
         help="Append-only JSONL store; records this scan and reports the score trend.",
@@ -95,6 +100,28 @@ def _render(report: Report, fmt: str) -> str:
     return _render_text(report)
 
 
+def _emit(report: Report, fmt: str, out: str | None) -> None:
+    """Write the report in ``fmt`` to ``out`` (file) or stdout.
+
+    PDF is binary and therefore always requires ``--out``; text formats print
+    to stdout unless a path is given.
+    """
+    if fmt == "pdf":
+        if not out:
+            raise SystemExit("--format pdf requires --out FILE")
+        with open(out, "wb") as fh:
+            fh.write(to_pdf(report))
+        print(f"Wrote PDF evidence pack to {out}")
+        return
+    rendered = _render(report, fmt)
+    if out:
+        with open(out, "w", encoding="utf-8") as fh:
+            fh.write(rendered)
+        print(f"Wrote {fmt} report to {out}")
+    else:
+        print(rendered)
+
+
 def _run_scan(
     source: str,
     cloud: str | None,
@@ -104,6 +131,7 @@ def _run_scan(
     sbom: str | None,
     fmt: str,
     history: str | None = None,
+    out: str | None = None,
 ) -> int:
     connectors: list[Connector] = [MockIdpConnector(source)]
     if cloud:
@@ -117,7 +145,7 @@ def _run_scan(
     if sbom:
         connectors.append(MockSbomConnector(sbom))
     report = Scan(connectors, CONTROLS).run()
-    print(_render(report, fmt))
+    _emit(report, fmt, out)
     if history:
         append_snapshot(report, history)
         trend = compute_trend(load_snapshots(history))
@@ -131,7 +159,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     if args.command == "scan":
         return _run_scan(
             args.source, args.cloud, args.tls, args.backup, args.sca, args.sbom,
-            args.format, args.history,
+            args.format, args.history, args.out,
         )
     return 2
 

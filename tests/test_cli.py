@@ -73,3 +73,22 @@ def test_history_records_snapshot_and_reports_trend(capsys, tmp_path):
 
     # Store is append-only: two lines recorded
     assert len(Path(store).read_text().splitlines()) == 2
+
+
+def test_scan_pdf_writes_file(capsys, tmp_path):
+    out = tmp_path / "evidence.pdf"
+    rc = main(["scan", "--source", FIXTURE, "--format", "pdf", "--out", str(out)])
+    assert rc in (0, 1)  # exit code reflects findings, not output success
+    data = out.read_bytes()
+    assert data.startswith(b"%PDF-")
+    assert b"%%EOF" in data
+    assert str(out) in capsys.readouterr().out
+
+
+def test_scan_pdf_without_out_errors(capsys):
+    try:
+        main(["scan", "--source", FIXTURE, "--format", "pdf"])
+    except SystemExit as exc:
+        assert "requires --out" in str(exc.code)
+    else:  # pragma: no cover - guard against silent success
+        raise AssertionError("expected SystemExit when --out is missing")

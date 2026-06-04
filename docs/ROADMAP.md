@@ -18,9 +18,9 @@ Core model, plugin engine, file-backed mock connector, CI, docs, licence.
 - C06 backups recent, C07 restore-tested, C08 immutable copy.
 - C10 dependency CVEs (OSV feed), C09 SBOM present and current.
 
-## E4 — Reporting (in progress)
+## E4 — Reporting (done)
 - Evidence pack: JSON + HTML audit export (done), per-control history + trend score (done).
-- PDF export pending.
+- PDF export (done) — zero-dep pure-Python writer, paginated Courier text, `--format pdf --out`.
 
 ## E5 — Real connectors
 - Microsoft Entra ID / LDAP (identity), Azure + AWS config (encryption, assets),
