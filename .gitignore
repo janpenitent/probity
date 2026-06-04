@@ -21,8 +21,5 @@ htmlcov/
 .DS_Store
 reports/
 
-# CI workflow held back until gh token has workflow scope
-.github/workflows/
-
 # Editor: Python Import Helper autocomplete cache (per-machine noise)
 .vscode/PythonImportHelper-v2-Completion.json
