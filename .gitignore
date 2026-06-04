@@ -20,3 +20,6 @@ htmlcov/
 *.log
 .DS_Store
 reports/
+
+# CI workflow held back until gh token has workflow scope
+.github/workflows/
