@@ -159,6 +159,24 @@ def test_scan_entra_without_env_errors(monkeypatch):
         raise AssertionError("expected SystemExit when Entra env vars are unset")
 
 
+def test_scan_aws_without_env_errors(monkeypatch):
+    for var in (
+        "PROBITY_AWS_ACCESS_KEY_ID",
+        "PROBITY_AWS_SECRET_ACCESS_KEY",
+        "PROBITY_AWS_REGION",
+    ):
+        monkeypatch.delenv(var, raising=False)
+    # A file identity source satisfies the identity-source guard so the AWS
+    # credential check is reached; connectors are lazy, so the missing file is
+    # never read before the SystemExit fires.
+    try:
+        main(["scan", "--source", "missing.json", "--aws"])
+    except SystemExit as exc:
+        assert "PROBITY_AWS_ACCESS_KEY_ID" in str(exc.code)
+    else:  # pragma: no cover - guard against silent success
+        raise AssertionError("expected SystemExit when AWS env vars are unset")
+
+
 def test_scan_with_governance_feeds_soft_controls(capsys, tmp_path):
     # a current security policy makes C01 partial (pending human validation),
     # never an auto-pass; an absent disclosure policy fails C15.
