@@ -34,5 +34,13 @@ Strategy: ingest real exports of free offline tools (no live credentials).
   (encryption, assets), SIEM (logging), backup vendors.
 
 ## E6 — Service + dashboard
-- Scheduled scans, persistence (Postgres/Timescale), web dashboard, alerts.
-- Multi-framework mapping (DORA, AI Act) reusing shared controls.
+- [x] Scheduled scans — `probity watch` (stdlib `threading` loop, `--interval`, `--once`).
+- [x] Persistence — reuses the append-only JSONL history (no DB; keeps zero runtime deps).
+- [x] Web dashboard — `probity serve` (stdlib `http.server`, inline-SVG score trend, control grid).
+- [x] Alerts — regression detection between scans → stdout / `--alert-file` / `--alert-webhook` (urllib).
+- [ ] Multi-framework mapping (DORA, AI Act) reusing shared controls — deferred.
+
+Design note: the roadmap originally proposed Postgres/Timescale + a JS dashboard.
+That was dropped to preserve Probity's zero-runtime-dependency guarantee — the
+JSONL history is the store, `http.server` is the server, hand-built SVG is the
+chart. A DB/UI backend can be added later as an optional extra, not a hard dep.
