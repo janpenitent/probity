@@ -84,13 +84,13 @@ stdlib `http.server` with hand-built inline SVG, and alert webhooks use
 
 ## Status
 
-Pre-alpha. 13 of 20 controls are implemented end-to-end: the HARD set
-(C06–C10, C17–C20) plus the first SOFT set (C01, C05, C11, C15) with the
-human-validation flag. Also JSON/HTML/PDF reporting, history + trend, scheduled
-`watch`, a `serve` dashboard, regression alerts, a live Entra ID connector, and
-DORA / EU AI Act cross-framework mapping. Remaining HARD controls (C02–C04,
-C12–C14, C16) are next. See [docs/ROADMAP.md](docs/ROADMAP.md) and
-[docs/CONTROLS.md](docs/CONTROLS.md).
+Pre-alpha. **All 20 controls are implemented end-to-end**: the full HARD set
+(C02–C04, C06–C10, C12–C14, C16–C20) and the SOFT set (C01, C05, C11, C15) with
+the human-validation flag. The HARD monitoring/asset-plane controls fail closed
+on stale or missing telemetry via a shared freshness helper. Also JSON/HTML/PDF
+reporting, history + trend, scheduled `watch`, a `serve` dashboard, regression
+alerts, a live Entra ID connector, and DORA / EU AI Act cross-framework mapping.
+See [docs/ROADMAP.md](docs/ROADMAP.md) and [docs/CONTROLS.md](docs/CONTROLS.md).
 
 ## Licensing
 
