@@ -9,6 +9,7 @@ from collections.abc import Sequence
 
 from probity.connectors.aws_connector import AwsConnector
 from probity.connectors.aws_monitoring_connector import AwsMonitoringConnector
+from probity.connectors.azure_connector import AzureConnector
 from probity.connectors.base import Connector
 from probity.connectors.cyclonedx_connector import CycloneDxConnector
 from probity.connectors.entra_connector import EntraConnector
@@ -83,6 +84,17 @@ _AWS_SESSION_TOKEN_ENV = "PROBITY_AWS_SESSION_TOKEN"
 _GCP_ENV = {
     "access_token": "PROBITY_GCP_ACCESS_TOKEN",
     "project": "PROBITY_GCP_PROJECT",
+}
+
+# Azure credentials for the ARM Compute connector (C02/C17). Same Azure AD
+# client-credentials grant as Entra (no JWT signing), with the ARM token scope
+# and a target subscription. Read from the environment only — never CLI flags —
+# so the client secret cannot leak into shell history or process listings.
+_AZURE_ENV = {
+    "tenant_id": "PROBITY_AZURE_TENANT_ID",
+    "client_id": "PROBITY_AZURE_CLIENT_ID",
+    "client_secret": "PROBITY_AZURE_CLIENT_SECRET",
+    "subscription_id": "PROBITY_AZURE_SUBSCRIPTION_ID",
 }
 
 
@@ -162,6 +174,16 @@ def _add_source_args(parser: argparse.ArgumentParser) -> None:
             "Collect Compute Engine instances (C02) and persistent disks (C17) live "
             f"from Google Cloud. Reads an OAuth2 access token from "
             f"{_GCP_ENV['access_token']} and the project from {_GCP_ENV['project']}."
+        ),
+    )
+    parser.add_argument(
+        "--azure",
+        action="store_true",
+        help=(
+            "Collect virtual machines (C02) and managed disks (C17) live from "
+            f"Microsoft Azure. Reads {_AZURE_ENV['tenant_id']}, "
+            f"{_AZURE_ENV['client_id']}, {_AZURE_ENV['client_secret']} and "
+            f"{_AZURE_ENV['subscription_id']} from the environment."
         ),
     )
 
@@ -330,6 +352,22 @@ def _gcp_from_env() -> GcpComputeConnector:
     return GcpComputeConnector(creds["access_token"], creds["project"])
 
 
+def _azure_from_env() -> AzureConnector:
+    """Build an AzureConnector from the env vars, or fail clearly."""
+    creds: dict[str, str] = {}
+    for arg, var in _AZURE_ENV.items():
+        value = os.environ.get(var)
+        if not value:
+            raise SystemExit(f"--azure requires {var} to be set in the environment")
+        creds[arg] = value
+    return AzureConnector(
+        creds["tenant_id"],
+        creds["client_id"],
+        creds["client_secret"],
+        creds["subscription_id"],
+    )
+
+
 def _connectors_from_args(args: argparse.Namespace) -> list[Connector]:
     """Build the connector list from the shared source flags on ``args``.
 
@@ -385,6 +423,8 @@ def _connectors_from_args(args: argparse.Namespace) -> list[Connector]:
         connectors.append(_aws_monitoring_from_env())
     if args.gcp:
         connectors.append(_gcp_from_env())
+    if args.azure:
+        connectors.append(_azure_from_env())
     return connectors
 
 
