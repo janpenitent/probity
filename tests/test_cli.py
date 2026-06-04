@@ -112,3 +112,20 @@ def test_scan_with_cyclonedx_feeds_c09(capsys, tmp_path):
     report = json.loads(out)
     c09 = next(f for f in report["findings"] if f["control_id"] == "C09")
     assert c09["status"] == "pass"
+
+
+def test_scan_with_single_framework_prints_coverage(capsys):
+    main(["scan", "--source", FIXTURE, "--framework", "dora"])
+    out = capsys.readouterr().out
+    assert "Framework coverage" in out
+    assert "DORA Regulation" in out
+    # NIS2-only and AI-Act titles must not appear for a single dora view.
+    assert "AI Act" not in out
+
+
+def test_scan_with_all_frameworks_prints_every_view(capsys):
+    main(["scan", "--source", FIXTURE, "--framework", "all"])
+    out = capsys.readouterr().out
+    assert "NIS2 Directive" in out
+    assert "DORA Regulation" in out
+    assert "EU AI Act" in out

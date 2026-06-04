@@ -27,6 +27,7 @@ from probity.controls.c18_tls import C18Tls
 from probity.controls.c19_access import C19Access
 from probity.controls.c20_mfa import C20Mfa
 from probity.engine.runner import Scan
+from probity.frameworks.mapping import Framework, FrameworkCoverage, all_coverage, coverage
 from probity.model.enums import Status
 from probity.model.finding import Report
 from probity.report.history import Trend, append_snapshot, compute_trend, load_snapshots
@@ -82,6 +83,11 @@ def build_parser() -> argparse.ArgumentParser:
     scan.add_argument(
         "--history",
         help="Append-only JSONL store; records this scan and reports the score trend.",
+    )
+    scan.add_argument(
+        "--framework",
+        choices=["nis2", "dora", "ai_act", "all"],
+        help="Also print per-framework coverage mapping the same evidence to NIS2/DORA/AI Act.",
     )
 
     watch = sub.add_parser("watch", help="Run scans on a schedule and alert on regressions.")
@@ -189,6 +195,24 @@ def _connectors_from_args(args: argparse.Namespace) -> list[Connector]:
     return connectors
 
 
+def _render_coverage(fc: FrameworkCoverage) -> str:
+    lines = [f"{fc.title} — score {fc.score}% ({fc.mapped_count} controls mapped)"]
+    for c in fc.controls:
+        refs = ", ".join(c.refs)
+        lines.append(f"  [{c.status.upper():>14}] {c.control_id} {c.title} → {refs}")
+    return "\n".join(lines)
+
+
+def _emit_frameworks(report: Report, framework: str) -> None:
+    if framework == "all":
+        views = all_coverage(report)
+    else:
+        views = (coverage(report, Framework(framework)),)
+    print("\nFramework coverage")
+    for fc in views:
+        print(_render_coverage(fc))
+
+
 def _run_scan(args: argparse.Namespace) -> int:
     report = Scan(_connectors_from_args(args), CONTROLS).run()
     _emit(report, args.format, args.out)
@@ -196,6 +220,8 @@ def _run_scan(args: argparse.Namespace) -> int:
         append_snapshot(report, args.history)
         trend = compute_trend(load_snapshots(args.history))
         print(_render_trend(trend))
+    if args.framework:
+        _emit_frameworks(report, args.framework)
     failed = any(f.status is Status.FAIL for f in report.findings)
     return 1 if failed else 0
 
