@@ -33,6 +33,8 @@ from probity.report.history import Trend, append_snapshot, compute_trend, load_s
 from probity.report.html_report import to_html
 from probity.report.json_report import to_json
 from probity.report.pdf_report import to_pdf
+from probity.service.dashboard import serve
+from probity.service.scheduler import AlertSinks, ScanScheduler
 
 # Registry of active controls. New controls are appended here as they land.
 CONTROLS: list[Control] = [
@@ -48,24 +50,30 @@ CONTROLS: list[Control] = [
 ]
 
 
+def _add_source_args(parser: argparse.ArgumentParser) -> None:
+    """Attach the shared connector-source flags used by ``scan`` and ``watch``."""
+    parser.add_argument("--source", required=True, help="Path to identity source JSON (mock_idp).")
+    parser.add_argument("--cloud", help="Path to cloud storage source JSON (mock_cloud).")
+    parser.add_argument("--tls", help="Path to TLS endpoint source JSON (mock_tls).")
+    parser.add_argument("--testssl", help="Path to real testssl.sh --jsonfile output.")
+    parser.add_argument("--sslyze", help="Path to real sslyze --json_out output.")
+    parser.add_argument("--backup", help="Path to backup-jobs source JSON (mock_backup).")
+    parser.add_argument("--veeam", help="Path to real Veeam B&R job-report JSON.")
+    parser.add_argument("--restic", help="Path to real restic snapshots --json output.")
+    parser.add_argument("--sca", help="Path to dependency/CVE source JSON (mock_sca).")
+    parser.add_argument("--osv", help="Path to real osv-scanner --format json output.")
+    parser.add_argument("--sbom", help="Path to SBOM component source JSON (mock_sbom).")
+    parser.add_argument("--cyclonedx", help="Path to a real CycloneDX JSON BOM.")
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="probity", description="Continuous NIS2 compliance evidence."
     )
     sub = parser.add_subparsers(dest="command", required=True)
+
     scan = sub.add_parser("scan", help="Run controls against sources and emit findings.")
-    scan.add_argument("--source", required=True, help="Path to identity source JSON (mock_idp).")
-    scan.add_argument("--cloud", help="Path to cloud storage source JSON (mock_cloud).")
-    scan.add_argument("--tls", help="Path to TLS endpoint source JSON (mock_tls).")
-    scan.add_argument("--testssl", help="Path to real testssl.sh --jsonfile output.")
-    scan.add_argument("--sslyze", help="Path to real sslyze --json_out output.")
-    scan.add_argument("--backup", help="Path to backup-jobs source JSON (mock_backup).")
-    scan.add_argument("--veeam", help="Path to real Veeam B&R job-report JSON.")
-    scan.add_argument("--restic", help="Path to real restic snapshots --json output.")
-    scan.add_argument("--sca", help="Path to dependency/CVE source JSON (mock_sca).")
-    scan.add_argument("--osv", help="Path to real osv-scanner --format json output.")
-    scan.add_argument("--sbom", help="Path to SBOM component source JSON (mock_sbom).")
-    scan.add_argument("--cyclonedx", help="Path to a real CycloneDX JSON BOM.")
+    _add_source_args(scan)
     scan.add_argument("--format", choices=["text", "json", "html", "pdf"], default="text")
     scan.add_argument(
         "--out",
@@ -75,6 +83,25 @@ def build_parser() -> argparse.ArgumentParser:
         "--history",
         help="Append-only JSONL store; records this scan and reports the score trend.",
     )
+
+    watch = sub.add_parser("watch", help="Run scans on a schedule and alert on regressions.")
+    _add_source_args(watch)
+    watch.add_argument(
+        "--history", required=True, help="Append-only JSONL store the loop records into."
+    )
+    watch.add_argument(
+        "--interval", type=float, default=3600.0, help="Seconds between scans (default 3600)."
+    )
+    watch.add_argument("--alert-file", help="Append regression alerts as JSONL to this path.")
+    watch.add_argument("--alert-webhook", help="POST regression alerts as JSON to this URL.")
+    watch.add_argument(
+        "--once", action="store_true", help="Run a single scan tick and exit (no loop)."
+    )
+
+    serve_p = sub.add_parser("serve", help="Serve the read-only compliance dashboard.")
+    serve_p.add_argument("--history", required=True, help="Append-only JSONL store to render.")
+    serve_p.add_argument("--host", default="127.0.0.1", help="Bind host (default 127.0.0.1).")
+    serve_p.add_argument("--port", type=int, default=8080, help="Bind port (default 8080).")
     return parser
 
 
@@ -134,64 +161,78 @@ def _emit(report: Report, fmt: str, out: str | None) -> None:
         print(rendered)
 
 
-def _run_scan(
-    source: str,
-    cloud: str | None,
-    tls: str | None,
-    backup: str | None,
-    sca: str | None,
-    sbom: str | None,
-    fmt: str,
-    history: str | None = None,
-    out: str | None = None,
-    osv: str | None = None,
-    cyclonedx: str | None = None,
-    testssl: str | None = None,
-    sslyze: str | None = None,
-    veeam: str | None = None,
-    restic: str | None = None,
-) -> int:
-    connectors: list[Connector] = [MockIdpConnector(source)]
-    if cloud:
-        connectors.append(MockCloudConnector(cloud))
-    if tls:
-        connectors.append(MockTlsConnector(tls))
-    if testssl:
-        connectors.append(TesttsslConnector(testssl))
-    if sslyze:
-        connectors.append(SslyzeConnector(sslyze))
-    if backup:
-        connectors.append(MockBackupConnector(backup))
-    if veeam:
-        connectors.append(VeeamConnector(veeam))
-    if restic:
-        connectors.append(ResticConnector(restic))
-    if sca:
-        connectors.append(MockScaConnector(sca))
-    if osv:
-        connectors.append(OsvConnector(osv))
-    if sbom:
-        connectors.append(MockSbomConnector(sbom))
-    if cyclonedx:
-        connectors.append(CycloneDxConnector(cyclonedx))
-    report = Scan(connectors, CONTROLS).run()
-    _emit(report, fmt, out)
-    if history:
-        append_snapshot(report, history)
-        trend = compute_trend(load_snapshots(history))
+def _connectors_from_args(args: argparse.Namespace) -> list[Connector]:
+    """Build the connector list from the shared source flags on ``args``."""
+    connectors: list[Connector] = [MockIdpConnector(args.source)]
+    if args.cloud:
+        connectors.append(MockCloudConnector(args.cloud))
+    if args.tls:
+        connectors.append(MockTlsConnector(args.tls))
+    if args.testssl:
+        connectors.append(TesttsslConnector(args.testssl))
+    if args.sslyze:
+        connectors.append(SslyzeConnector(args.sslyze))
+    if args.backup:
+        connectors.append(MockBackupConnector(args.backup))
+    if args.veeam:
+        connectors.append(VeeamConnector(args.veeam))
+    if args.restic:
+        connectors.append(ResticConnector(args.restic))
+    if args.sca:
+        connectors.append(MockScaConnector(args.sca))
+    if args.osv:
+        connectors.append(OsvConnector(args.osv))
+    if args.sbom:
+        connectors.append(MockSbomConnector(args.sbom))
+    if args.cyclonedx:
+        connectors.append(CycloneDxConnector(args.cyclonedx))
+    return connectors
+
+
+def _run_scan(args: argparse.Namespace) -> int:
+    report = Scan(_connectors_from_args(args), CONTROLS).run()
+    _emit(report, args.format, args.out)
+    if args.history:
+        append_snapshot(report, args.history)
+        trend = compute_trend(load_snapshots(args.history))
         print(_render_trend(trend))
     failed = any(f.status is Status.FAIL for f in report.findings)
     return 1 if failed else 0
 
 
+def _run_watch(args: argparse.Namespace) -> int:
+    connectors = _connectors_from_args(args)
+    sinks = AlertSinks(to_stdout=True, file=args.alert_file, webhook=args.alert_webhook)
+    scheduler = ScanScheduler(
+        scan_factory=lambda: Scan(connectors, CONTROLS).run(),
+        history_path=args.history,
+        interval_seconds=args.interval,
+        sinks=sinks,
+    )
+    if args.once:
+        alert = scheduler.tick()
+        return 1 if alert.is_actionable else 0
+    print(f"Probity watch — scanning every {args.interval:g}s into {args.history}. Ctrl-C to stop.")
+    try:
+        scheduler.run_forever()
+    except KeyboardInterrupt:
+        print("\nProbity watch stopped.")
+    return 0
+
+
+def _run_serve(args: argparse.Namespace) -> int:
+    serve(args.history, host=args.host, port=args.port)
+    return 0
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     if args.command == "scan":
-        return _run_scan(
-            args.source, args.cloud, args.tls, args.backup, args.sca, args.sbom,
-            args.format, args.history, args.out, args.osv, args.cyclonedx,
-            args.testssl, args.sslyze, args.veeam, args.restic,
-        )
+        return _run_scan(args)
+    if args.command == "watch":
+        return _run_watch(args)
+    if args.command == "serve":
+        return _run_serve(args)
     return 2
 
 
