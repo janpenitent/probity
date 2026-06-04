@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 Janier Rodríguez
+
 from probity.connectors.mock_idp import ACCOUNT_KIND
 from probity.controls.c19_access import C19Access
 from probity.model.enums import Status

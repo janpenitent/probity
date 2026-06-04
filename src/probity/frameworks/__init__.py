@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 Janier Rodríguez
+
 """Multi-framework mapping.
 
 The same control evidence answers more than one regulation. A control's NIS2

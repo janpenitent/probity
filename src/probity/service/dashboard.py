@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 Janier Rodríguez
+
 """Read-only compliance dashboard served over stdlib ``http.server``.
 
 Renders the append-only scan history into a single self-contained HTML page: a

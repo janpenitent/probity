@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 Janier Rodríguez
+
 """File-backed software-composition (dependency/CVE) connector.
 
 Stands in for a real OSV/NVD lookup: the source already carries the

@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 Janier Rodríguez
+
 """C08 — Immutable/offline backup copy for critical assets (NIS2 Art.21(2)(c)).
 
 A backup that can be altered or deleted by the same credentials that run the

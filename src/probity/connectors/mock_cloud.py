@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 Janier Rodríguez
+
 """File-backed cloud storage connector for development and tests."""
 
 from __future__ import annotations

@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 Janier Rodríguez
+
 """Real software-composition connector backed by osv-scanner output.
 
 Unlike :class:`~probity.connectors.mock_sca.MockScaConnector`, this reads the

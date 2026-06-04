@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 Janier Rodríguez
+
 """Self-contained PDF evidence pack.
 
 Renders a :class:`Report` to a paginated PDF with no third-party dependencies.

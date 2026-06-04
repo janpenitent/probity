@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 Janier Rodríguez
+
 """C10 — Known CVEs in dependencies (NIS2 Art.21(2)(d), supply chain)."""
 
 from __future__ import annotations

@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 Janier Rodríguez
+
 """Service layer: scheduled scans, regression alerting, and a read-only dashboard.
 
 Everything here is zero-dependency stdlib: ``threading`` drives the scan loop,

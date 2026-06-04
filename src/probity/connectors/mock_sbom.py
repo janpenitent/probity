@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 Janier Rodríguez
+
 """File-backed SBOM (Software Bill of Materials) connector.
 
 Stands in for a real SBOM toolchain (Syft, CycloneDX, SPDX): the source

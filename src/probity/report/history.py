@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 Janier Rodríguez
+
 """Append-only scan history and trend scoring.
 
 Each scan can be recorded as one JSON line in an append-only store (an audit

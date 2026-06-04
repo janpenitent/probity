@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 Janier Rodríguez
+
 """C06 — Backups recent for critical assets (NIS2 Art.21(2)(c))."""
 
 from __future__ import annotations

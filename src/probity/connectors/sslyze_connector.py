@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 Janier Rodríguez
+
 """Real TLS connector backed by ``sslyze --json_out`` output.
 
 Like :class:`~probity.connectors.testssl_connector.TesttsslConnector` this

@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 Janier Rodríguez
+
 """C07 — Backups restore-tested for critical assets (NIS2 Art.21(2)(c)).
 
 A backup that has never been restore-tested is unproven. Each critical asset

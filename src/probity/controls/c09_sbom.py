@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 Janier Rodríguez
+
 """C09 — SBOM present and current for shipped components (NIS2 Art.21(2)(d)).
 
 Supply-chain risk cannot be assessed for software whose composition is

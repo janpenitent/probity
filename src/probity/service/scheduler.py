@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 Janier Rodríguez
+
 """Scheduled scan loop.
 
 Drives a scan on a fixed interval using only stdlib ``threading`` — no cron, no
