@@ -203,6 +203,22 @@ def test_scan_gcp_without_env_errors(monkeypatch):
         raise AssertionError("expected SystemExit when GCP env vars are unset")
 
 
+def test_scan_azure_without_env_errors(monkeypatch):
+    for var in (
+        "PROBITY_AZURE_TENANT_ID",
+        "PROBITY_AZURE_CLIENT_ID",
+        "PROBITY_AZURE_CLIENT_SECRET",
+        "PROBITY_AZURE_SUBSCRIPTION_ID",
+    ):
+        monkeypatch.delenv(var, raising=False)
+    try:
+        main(["scan", "--source", "missing.json", "--azure"])
+    except SystemExit as exc:
+        assert "PROBITY_AZURE_TENANT_ID" in str(exc.code)
+    else:  # pragma: no cover - guard against silent success
+        raise AssertionError("expected SystemExit when Azure env vars are unset")
+
+
 def test_scan_with_governance_feeds_soft_controls(capsys, tmp_path):
     # a current security policy makes C01 partial (pending human validation),
     # never an auto-pass; an absent disclosure policy fails C15.
