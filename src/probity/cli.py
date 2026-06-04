@@ -12,6 +12,7 @@ from probity.connectors.mock_tls import MockTlsConnector
 from probity.controls.base import Control
 from probity.controls.c06_backups import C06Backups
 from probity.controls.c07_restore import C07Restore
+from probity.controls.c08_immutable import C08Immutable
 from probity.controls.c10_cves import C10Cves
 from probity.controls.c17_encryption import C17Encryption
 from probity.controls.c18_tls import C18Tls
@@ -26,6 +27,7 @@ from probity.report.json_report import to_json
 CONTROLS: list[Control] = [
     C06Backups(),
     C07Restore(),
+    C08Immutable(),
     C10Cves(),
     C17Encryption(),
     C18Tls(),
