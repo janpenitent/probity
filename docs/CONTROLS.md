@@ -47,7 +47,7 @@ fixture or a real tool export:
 | C02/C12/C14  | asset management JSON (`--assets`)                      |
 | C12          | Trivy scan JSON (`--trivy`) — real scanner export       |
 | C03/C04      | SIEM export JSON (`--siem`)                             |
-| C13          | CI/CD pipeline config JSON (`--pipeline`)              |
+| C13          | CI/CD pipeline config JSON (`--pipeline`), **live** GitHub REST API (`--github`) |
 | C16          | HR/LMS training records JSON (`--training`)            |
 
 `--entra` is the first *live* connector: it authenticates to Microsoft Graph
@@ -66,6 +66,18 @@ unchanged against either the mock or a real scan. What C12 verifies is scan
 treated as in scope; a critical asset that was never scanned produces no fact,
 so pair `--trivy` with an inventory source (`--assets`) to catch that gap. A
 single report object or a JSON array of reports are both accepted.
+
+`--github` is the second *live* connector (after `--entra`): it reads
+repositories from the GitHub REST API (stdlib `urllib`, zero deps) and emits the
+same `pipeline.config` facts as `--pipeline`, so C13 runs unchanged. Per repo,
+`secret_scanning_enabled` comes from `security_and_analysis.secret_scanning`, and
+`sast_enabled` is inferred from code-scanning *results* — a repo with at least
+one analysis is actively scanned (CodeQL default setup, an Actions workflow, or a
+third-party uploader all count). A `403`/`404` on the code-scanning endpoint
+(scanning off, no access, or no advanced security) reads as `sast_enabled =
+False` — fail-closed, so C13 surfaces the gap. The access token comes from
+`PROBITY_GITHUB_TOKEN` and an optional org scope from `PROBITY_GITHUB_ORG`
+(otherwise the token user's repos), never CLI flags.
 
 ### SOFT controls and human validation
 
