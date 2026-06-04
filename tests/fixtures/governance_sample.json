@@ -1,0 +1,39 @@
+{
+  "documents": [
+    {
+      "id": "pol-sec",
+      "type": "security_policy",
+      "title": "Information Security Policy",
+      "approved_at": "2025-09-01",
+      "review_due": "2026-09-01"
+    },
+    {
+      "id": "proc-ir",
+      "type": "incident_procedure",
+      "title": "Incident Notification Procedure (24h/72h)",
+      "approved_at": "2025-10-15",
+      "review_due": "2026-10-15"
+    },
+    {
+      "id": "pol-cvd",
+      "type": "disclosure_policy",
+      "title": "Coordinated Vulnerability Disclosure",
+      "approved_at": "2025-07-01",
+      "review_due": "2027-07-01"
+    }
+  ],
+  "suppliers": [
+    {
+      "id": "sup-acme",
+      "name": "AcmeCloud",
+      "criticality": "high",
+      "risk_assessed_at": "2026-01-15"
+    },
+    {
+      "id": "sup-mailer",
+      "name": "BulkMailer",
+      "criticality": "low",
+      "risk_assessed_at": "2024-02-01"
+    }
+  ]
+}

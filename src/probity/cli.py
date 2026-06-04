@@ -12,6 +12,7 @@ from probity.connectors.cyclonedx_connector import CycloneDxConnector
 from probity.connectors.entra_connector import EntraConnector
 from probity.connectors.mock_backup import MockBackupConnector
 from probity.connectors.mock_cloud import MockCloudConnector
+from probity.connectors.mock_governance import MockGovernanceConnector
 from probity.connectors.mock_idp import MockIdpConnector
 from probity.connectors.mock_sbom import MockSbomConnector
 from probity.connectors.mock_sca import MockScaConnector
@@ -22,11 +23,15 @@ from probity.connectors.sslyze_connector import SslyzeConnector
 from probity.connectors.testssl_connector import TesttsslConnector
 from probity.connectors.veeam_connector import VeeamConnector
 from probity.controls.base import Control
+from probity.controls.c01_security_policy import C01SecurityPolicy
+from probity.controls.c05_incident_procedure import C05IncidentProcedure
 from probity.controls.c06_backups import C06Backups
 from probity.controls.c07_restore import C07Restore
 from probity.controls.c08_immutable import C08Immutable
 from probity.controls.c09_sbom import C09Sbom
 from probity.controls.c10_cves import C10Cves
+from probity.controls.c11_supplier_risk import C11SupplierRisk
+from probity.controls.c15_disclosure import C15Disclosure
 from probity.controls.c17_encryption import C17Encryption
 from probity.controls.c18_tls import C18Tls
 from probity.controls.c19_access import C19Access
@@ -44,11 +49,15 @@ from probity.service.scheduler import AlertSinks, ScanScheduler
 
 # Registry of active controls. New controls are appended here as they land.
 CONTROLS: list[Control] = [
+    C01SecurityPolicy(),
+    C05IncidentProcedure(),
     C06Backups(),
     C07Restore(),
     C08Immutable(),
     C09Sbom(),
     C10Cves(),
+    C11SupplierRisk(),
+    C15Disclosure(),
     C17Encryption(),
     C18Tls(),
     C19Access(),
@@ -93,6 +102,10 @@ def _add_source_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--osv", help="Path to real osv-scanner --format json output.")
     parser.add_argument("--sbom", help="Path to SBOM component source JSON (mock_sbom).")
     parser.add_argument("--cyclonedx", help="Path to a real CycloneDX JSON BOM.")
+    parser.add_argument(
+        "--governance",
+        help="Path to governance records JSON (documents + suppliers) for SOFT controls.",
+    )
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -142,9 +155,10 @@ def build_parser() -> argparse.ArgumentParser:
 def _render_text(report: Report) -> str:
     lines = [f"Probity scan — score {report.score}%  {report.counts()}"]
     for finding in report.findings:
+        human = "  ⚑ requires human validation" if finding.requires_human_validation else ""
         lines.append(
             f"[{finding.status.value.upper():>14}] {finding.control_id} "
-            f"{finding.title} — {finding.summary}"
+            f"{finding.title} — {finding.summary}{human}"
         )
         for ev in finding.evidence:
             lines.append(f"    - {ev.description} ({len(ev.items)} items)")
@@ -241,6 +255,8 @@ def _connectors_from_args(args: argparse.Namespace) -> list[Connector]:
         connectors.append(MockSbomConnector(args.sbom))
     if args.cyclonedx:
         connectors.append(CycloneDxConnector(args.cyclonedx))
+    if args.governance:
+        connectors.append(MockGovernanceConnector(args.governance))
     return connectors
 
 

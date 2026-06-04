@@ -156,3 +156,31 @@ def test_scan_entra_without_env_errors(monkeypatch):
         assert "PROBITY_ENTRA_TENANT_ID" in str(exc.code)
     else:  # pragma: no cover - guard against silent success
         raise AssertionError("expected SystemExit when Entra env vars are unset")
+
+
+def test_scan_with_governance_feeds_soft_controls(capsys, tmp_path):
+    # a current security policy makes C01 partial (pending human validation),
+    # never an auto-pass; an absent disclosure policy fails C15.
+    gov = tmp_path / "gov.json"
+    gov.write_text(
+        json.dumps(
+            {
+                "documents": [
+                    {
+                        "id": "pol-sec",
+                        "type": "security_policy",
+                        "title": "InfoSec Policy",
+                        "review_due": "2099-01-01",
+                    }
+                ],
+                "suppliers": [],
+            }
+        )
+    )
+    main(["scan", "--source", FIXTURE, "--governance", str(gov), "--format", "json"])
+    report = json.loads(capsys.readouterr().out)
+    c01 = next(f for f in report["findings"] if f["control_id"] == "C01")
+    assert c01["status"] == "partial"
+    assert c01["requires_human_validation"] is True
+    c15 = next(f for f in report["findings"] if f["control_id"] == "C15")
+    assert c15["status"] == "fail"

@@ -30,6 +30,10 @@ class Finding:
     summary: str
     nis2_refs: tuple[str, ...] = ()
     evidence: tuple[Evidence, ...] = ()
+    # SOFT controls can confirm an artifact exists and is current, but its
+    # adequacy needs an auditor's judgement. This flag marks that the finding is
+    # not fully machine-verified and a human must validate the content.
+    requires_human_validation: bool = False
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -40,6 +44,7 @@ class Finding:
             "summary": self.summary,
             "nis2_refs": list(self.nis2_refs),
             "evidence": [e.to_dict() for e in self.evidence],
+            "requires_human_validation": self.requires_human_validation,
         }
 
 
