@@ -45,6 +45,7 @@ fixture or a real tool export:
 | C19/C20      | **live** Microsoft Entra ID / Graph API (`--entra`)    |
 | C01/C05/C11/C15 | governance records JSON (`--governance`)            |
 | C02/C12/C14  | asset management JSON (`--assets`)                      |
+| C12          | Trivy scan JSON (`--trivy`) — real scanner export       |
 | C03/C04      | SIEM export JSON (`--siem`)                             |
 | C13          | CI/CD pipeline config JSON (`--pipeline`)              |
 | C16          | HR/LMS training records JSON (`--training`)            |
@@ -56,6 +57,15 @@ from the environment (`PROBITY_ENTRA_TENANT_ID`, `PROBITY_ENTRA_CLIENT_ID`,
 `PROBITY_ENTRA_CLIENT_SECRET`), never CLI flags. `hr_active` is a sign-in
 staleness proxy (Entra has no HR feed): an account with no successful sign-in in
 90 days is treated as inactive so C19 surfaces it — fail-closed.
+
+`--trivy` ingests a real `trivy ... --format json` export (free, offline, no
+credentials) and emits one `vulnscan.target` per scanned artifact, so C12 runs
+unchanged against either the mock or a real scan. What C12 verifies is scan
+*freshness*: Trivy's `CreatedAt` becomes `last_scan`, and a missing timestamp
+(older Trivy builds) reads as stale — fail-closed. Each scanned artifact is
+treated as in scope; a critical asset that was never scanned produces no fact,
+so pair `--trivy` with an inventory source (`--assets`) to catch that gap. A
+single report object or a JSON array of reports are both accepted.
 
 ### SOFT controls and human validation
 
