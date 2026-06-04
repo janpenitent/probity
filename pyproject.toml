@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "probity"
-version = "0.0.1"
+version = "0.1.0"
 description = "Continuous, auditable NIS2 compliance evidence. Open-core."
 readme = "README.md"
 license = "AGPL-3.0-or-later"
@@ -12,7 +12,7 @@ requires-python = ">=3.11"
 authors = [{ name = "Janier Rodríguez" }]
 keywords = ["nis2", "compliance", "security", "audit", "evidence", "eu"]
 classifiers = [
-    "Development Status :: 2 - Pre-Alpha",
+    "Development Status :: 4 - Beta",
     "Intended Audience :: Information Technology",
     "Topic :: Security",
 ]
