@@ -7,6 +7,7 @@ import argparse
 import os
 from collections.abc import Sequence
 
+from probity.connectors.aws_connector import AwsConnector
 from probity.connectors.base import Connector
 from probity.connectors.cyclonedx_connector import CycloneDxConnector
 from probity.connectors.entra_connector import EntraConnector
@@ -61,6 +62,16 @@ _ENTRA_ENV = {
 _GITHUB_TOKEN_ENV = "PROBITY_GITHUB_TOKEN"
 _GITHUB_ORG_ENV = "PROBITY_GITHUB_ORG"
 
+# AWS credentials for the EC2/EBS connector (C02/C17). Read from the environment
+# only — never CLI flags — so the secret access key cannot leak into shell
+# history or process listings. The session token is optional (STS / SSO creds).
+_AWS_ENV = {
+    "access_key": "PROBITY_AWS_ACCESS_KEY_ID",
+    "secret_key": "PROBITY_AWS_SECRET_ACCESS_KEY",
+    "region": "PROBITY_AWS_REGION",
+}
+_AWS_SESSION_TOKEN_ENV = "PROBITY_AWS_SESSION_TOKEN"
+
 
 def _add_source_args(parser: argparse.ArgumentParser) -> None:
     """Attach the shared connector-source flags used by ``scan`` and ``watch``.
@@ -112,6 +123,15 @@ def _add_source_args(parser: argparse.ArgumentParser) -> None:
         ),
     )
     parser.add_argument("--training", help="Path to HR/LMS training records JSON for C16.")
+    parser.add_argument(
+        "--aws",
+        action="store_true",
+        help=(
+            "Collect EC2 instances (C02) and EBS volumes (C17) live from AWS. Reads "
+            f"credentials from {_AWS_ENV['access_key']}, {_AWS_ENV['secret_key']}, "
+            f"{_AWS_ENV['region']} (and optional {_AWS_SESSION_TOKEN_ENV})."
+        ),
+    )
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -234,6 +254,22 @@ def _github_from_env() -> GitHubConnector:
     return GitHubConnector(token, os.environ.get(_GITHUB_ORG_ENV) or None)
 
 
+def _aws_from_env() -> AwsConnector:
+    """Build an AwsConnector from the credential env vars, or fail clearly."""
+    creds: dict[str, str] = {}
+    for arg, var in _AWS_ENV.items():
+        value = os.environ.get(var)
+        if not value:
+            raise SystemExit(f"--aws requires {var} to be set in the environment")
+        creds[arg] = value
+    return AwsConnector(
+        creds["access_key"],
+        creds["secret_key"],
+        creds["region"],
+        session_token=os.environ.get(_AWS_SESSION_TOKEN_ENV) or None,
+    )
+
+
 def _connectors_from_args(args: argparse.Namespace) -> list[Connector]:
     """Build the connector list from the shared source flags on ``args``.
 
@@ -283,6 +319,8 @@ def _connectors_from_args(args: argparse.Namespace) -> list[Connector]:
         connectors.append(_github_from_env())
     if args.training:
         connectors.append(MockTrainingConnector(args.training))
+    if args.aws:
+        connectors.append(_aws_from_env())
     return connectors
 
 
