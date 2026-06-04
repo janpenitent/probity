@@ -4,10 +4,12 @@
 from __future__ import annotations
 
 import argparse
+import os
 from collections.abc import Sequence
 
 from probity.connectors.base import Connector
 from probity.connectors.cyclonedx_connector import CycloneDxConnector
+from probity.connectors.entra_connector import EntraConnector
 from probity.connectors.mock_backup import MockBackupConnector
 from probity.connectors.mock_cloud import MockCloudConnector
 from probity.connectors.mock_idp import MockIdpConnector
@@ -54,9 +56,32 @@ CONTROLS: list[Control] = [
 ]
 
 
+# Env vars holding the Entra app-registration credentials. Never accepted as
+# CLI flags (would leak into shell history / process listings) — read from the
+# environment only, validated at connector construction.
+_ENTRA_ENV = {
+    "tenant_id": "PROBITY_ENTRA_TENANT_ID",
+    "client_id": "PROBITY_ENTRA_CLIENT_ID",
+    "client_secret": "PROBITY_ENTRA_CLIENT_SECRET",
+}
+
+
 def _add_source_args(parser: argparse.ArgumentParser) -> None:
-    """Attach the shared connector-source flags used by ``scan`` and ``watch``."""
-    parser.add_argument("--source", required=True, help="Path to identity source JSON (mock_idp).")
+    """Attach the shared connector-source flags used by ``scan`` and ``watch``.
+
+    Identity facts come from either a file source (``--source``) or a live
+    Entra tenant (``--entra``); at least one is required.
+    """
+    parser.add_argument("--source", help="Path to identity source JSON (mock_idp).")
+    parser.add_argument(
+        "--entra",
+        action="store_true",
+        help=(
+            "Collect identities live from Microsoft Entra ID. Reads credentials from "
+            f"{_ENTRA_ENV['tenant_id']}, {_ENTRA_ENV['client_id']}, "
+            f"{_ENTRA_ENV['client_secret']}."
+        ),
+    )
     parser.add_argument("--cloud", help="Path to cloud storage source JSON (mock_cloud).")
     parser.add_argument("--tls", help="Path to TLS endpoint source JSON (mock_tls).")
     parser.add_argument("--testssl", help="Path to real testssl.sh --jsonfile output.")
@@ -170,9 +195,30 @@ def _emit(report: Report, fmt: str, out: str | None) -> None:
         print(rendered)
 
 
+def _entra_from_env() -> EntraConnector:
+    """Build an EntraConnector from the credential env vars, or fail clearly."""
+    creds: dict[str, str] = {}
+    for arg, var in _ENTRA_ENV.items():
+        value = os.environ.get(var)
+        if not value:
+            raise SystemExit(f"--entra requires {var} to be set in the environment")
+        creds[arg] = value
+    return EntraConnector(creds["tenant_id"], creds["client_id"], creds["client_secret"])
+
+
 def _connectors_from_args(args: argparse.Namespace) -> list[Connector]:
-    """Build the connector list from the shared source flags on ``args``."""
-    connectors: list[Connector] = [MockIdpConnector(args.source)]
+    """Build the connector list from the shared source flags on ``args``.
+
+    Identity facts (C19/C20) come from ``--source`` and/or ``--entra``; at
+    least one must be supplied.
+    """
+    if not args.source and not args.entra:
+        raise SystemExit("provide an identity source: --source FILE and/or --entra")
+    connectors: list[Connector] = []
+    if args.source:
+        connectors.append(MockIdpConnector(args.source))
+    if args.entra:
+        connectors.append(_entra_from_env())
     if args.cloud:
         connectors.append(MockCloudConnector(args.cloud))
     if args.tls:

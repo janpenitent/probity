@@ -60,7 +60,14 @@ probity serve --history history.jsonl --port 8080
 Connectors accept either mock fixtures or **real tool exports** — same controls,
 no live credentials needed: osv-scanner (`--osv`), CycloneDX (`--cyclonedx`),
 testssl.sh (`--testssl`), sslyze (`--sslyze`), Veeam (`--veeam`), restic
-(`--restic`).
+(`--restic`). The first **live** connector, Microsoft Entra ID (`--entra`),
+talks to the Graph API directly (OAuth2 client-credentials, stdlib `urllib`,
+still zero deps) to feed C19/C20:
+
+```bash
+export PROBITY_ENTRA_TENANT_ID=... PROBITY_ENTRA_CLIENT_ID=... PROBITY_ENTRA_CLIENT_SECRET=...
+probity scan --entra --format json
+```
 
 ## Zero runtime dependencies
 

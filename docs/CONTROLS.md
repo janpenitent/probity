@@ -42,6 +42,15 @@ fixture or a real tool export:
 | C09          | CycloneDX BOM (`--cyclonedx`)                           |
 | C10          | osv-scanner JSON (`--osv`)                              |
 | C18          | testssl.sh (`--testssl`), sslyze (`--sslyze`)          |
+| C19/C20      | **live** Microsoft Entra ID / Graph API (`--entra`)    |
+
+`--entra` is the first *live* connector: it authenticates to Microsoft Graph
+(OAuth2 client-credentials, stdlib `urllib`, zero deps) and emits the same
+`identity.account` facts as the mock, so C19/C20 run unchanged. Credentials come
+from the environment (`PROBITY_ENTRA_TENANT_ID`, `PROBITY_ENTRA_CLIENT_ID`,
+`PROBITY_ENTRA_CLIENT_SECRET`), never CLI flags. `hr_active` is a sign-in
+staleness proxy (Entra has no HR feed): an account with no successful sign-in in
+90 days is treated as inactive so C19 surfaces it — fail-closed.
 
 ## Cross-framework mapping
 
