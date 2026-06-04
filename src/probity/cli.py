@@ -23,6 +23,7 @@ from probity.controls.c20_mfa import C20Mfa
 from probity.engine.runner import Scan
 from probity.model.enums import Status
 from probity.model.finding import Report
+from probity.report.html_report import to_html
 from probity.report.json_report import to_json
 
 # Registry of active controls. New controls are appended here as they land.
@@ -51,7 +52,7 @@ def build_parser() -> argparse.ArgumentParser:
     scan.add_argument("--backup", help="Path to backup-jobs source JSON (mock_backup).")
     scan.add_argument("--sca", help="Path to dependency/CVE source JSON (mock_sca).")
     scan.add_argument("--sbom", help="Path to SBOM component source JSON (mock_sbom).")
-    scan.add_argument("--format", choices=["text", "json"], default="text")
+    scan.add_argument("--format", choices=["text", "json", "html"], default="text")
     return parser
 
 
@@ -65,6 +66,14 @@ def _render_text(report: Report) -> str:
         for ev in finding.evidence:
             lines.append(f"    - {ev.description} ({len(ev.items)} items)")
     return "\n".join(lines)
+
+
+def _render(report: Report, fmt: str) -> str:
+    if fmt == "json":
+        return to_json(report)
+    if fmt == "html":
+        return to_html(report)
+    return _render_text(report)
 
 
 def _run_scan(
@@ -88,7 +97,7 @@ def _run_scan(
     if sbom:
         connectors.append(MockSbomConnector(sbom))
     report = Scan(connectors, CONTROLS).run()
-    print(to_json(report) if fmt == "json" else _render_text(report))
+    print(_render(report, fmt))
     failed = any(f.status is Status.FAIL for f in report.findings)
     return 1 if failed else 0
 
