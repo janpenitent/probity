@@ -28,27 +28,7 @@ from probity.connectors.sslyze_connector import SslyzeConnector
 from probity.connectors.testssl_connector import TesttsslConnector
 from probity.connectors.trivy_connector import TrivyConnector
 from probity.connectors.veeam_connector import VeeamConnector
-from probity.controls.base import Control
-from probity.controls.c01_security_policy import C01SecurityPolicy
-from probity.controls.c02_asset_inventory import C02AssetInventory
-from probity.controls.c03_logging import C03Logging
-from probity.controls.c04_detection import C04Detection
-from probity.controls.c05_incident_procedure import C05IncidentProcedure
-from probity.controls.c06_backups import C06Backups
-from probity.controls.c07_restore import C07Restore
-from probity.controls.c08_immutable import C08Immutable
-from probity.controls.c09_sbom import C09Sbom
-from probity.controls.c10_cves import C10Cves
-from probity.controls.c11_supplier_risk import C11SupplierRisk
-from probity.controls.c12_vuln_scanning import C12VulnScanning
-from probity.controls.c13_cicd_security import C13CicdSecurity
-from probity.controls.c14_patch_management import C14PatchManagement
-from probity.controls.c15_disclosure import C15Disclosure
-from probity.controls.c16_training import C16Training
-from probity.controls.c17_encryption import C17Encryption
-from probity.controls.c18_tls import C18Tls
-from probity.controls.c19_access import C19Access
-from probity.controls.c20_mfa import C20Mfa
+from probity.controls import ALL_CONTROLS
 from probity.engine.runner import Scan
 from probity.frameworks.mapping import Framework, FrameworkCoverage, all_coverage, coverage
 from probity.model.enums import Status
@@ -60,29 +40,9 @@ from probity.report.pdf_report import to_pdf
 from probity.service.dashboard import serve
 from probity.service.scheduler import AlertSinks, ScanScheduler
 
-# Registry of active controls. New controls are appended here as they land.
-CONTROLS: list[Control] = [
-    C01SecurityPolicy(),
-    C02AssetInventory(),
-    C03Logging(),
-    C04Detection(),
-    C05IncidentProcedure(),
-    C06Backups(),
-    C07Restore(),
-    C08Immutable(),
-    C09Sbom(),
-    C10Cves(),
-    C11SupplierRisk(),
-    C12VulnScanning(),
-    C13CicdSecurity(),
-    C14PatchManagement(),
-    C15Disclosure(),
-    C16Training(),
-    C17Encryption(),
-    C18Tls(),
-    C19Access(),
-    C20Mfa(),
-]
+# Active controls come from the single-source-of-truth registry in
+# probity.controls so the catalogue cannot drift between the CLI and runner.
+CONTROLS = ALL_CONTROLS
 
 
 # Env vars holding the Entra app-registration credentials. Never accepted as
