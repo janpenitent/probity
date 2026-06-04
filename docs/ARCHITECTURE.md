@@ -34,9 +34,52 @@ Connector.collect() -> [Fact]  -->  FactSet  -->  Control.evaluate(FactSet) -> F
 failures: an exception inside a control becomes an `ERROR` finding instead of
 aborting the whole scan (no silent swallowing — the error is surfaced).
 
+## Reporting (`probity.report`)
+
+A `Report` is rendered by independent, pure reporters — `json_report`,
+`html_report`, and a zero-dependency pure-Python `pdf_report` writer. `history`
+appends each scan as one line to an append-only JSONL store (`Snapshot`) and
+derives a `Trend` (score delta vs the previous scan) — the only persistence
+layer, deliberately no database.
+
+## Service (`probity.service`)
+
+The continuous layer, all stdlib:
+
+- **scheduler** — `ScanScheduler` runs the pipeline on an interval (`threading`),
+  records each scan to history, and dispatches alerts.
+- **alerts** — pure `detect_transitions` / `build_alert` over consecutive
+  snapshots (fail-closed: an unknown status ranks worst; a recovery alone is not
+  actionable), with stdout / file / webhook (`urllib`) sinks.
+- **dashboard** — `render_dashboard` is a pure function of the history file;
+  `serve` is a thin `http.server` shell around it with an inline-SVG trend.
+
+## Frameworks (`probity.frameworks`)
+
+`mapping` maps the same evidence onto DORA and the EU AI Act. NIS2 references
+stay on the control (single source of truth); cross-references live in a
+constant table, and `coverage` / `all_coverage` derive a per-framework view
+(mapped controls, statuses, framework-scoped score) from a `Report` without
+modifying any control.
+
+## Module map
+
+```
+probity/
+  model/       Fact, FactSet, Finding, Report, enums   (immutable core types)
+  connectors/  base + mock_* fixtures + real exports    (I/O -> Facts)
+  controls/    base + c06..c20                          (Facts -> Finding, pure)
+  engine/      runner.Scan                              (wires it together)
+  report/      json / html / pdf / history              (Report -> artifacts)
+  service/     scheduler / alerts / dashboard           (continuous layer)
+  frameworks/  mapping                                  (NIS2 -> DORA / AI Act)
+  cli.py       scan | watch | serve
+```
+
 ## Design rules
 
 - Hard (deterministic) checks first; soft (LLM-reasoned) checks later behind an
   explicit "requires human validation" flag.
 - Connectors do I/O; controls do logic. Never mix them — keeps controls trivially
   unit-testable with synthetic facts.
+- Zero runtime dependencies: every layer above is built on the Python stdlib.

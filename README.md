@@ -37,10 +37,45 @@ pip install -e ".[dev]"
 probity scan --source tests/fixtures/idp_sample.json
 ```
 
+## Commands
+
+```bash
+# One-off scan; --format text|json|html|pdf, --out FILE for pdf/files
+probity scan --source idp.json --cloud cloud.json --tls tls.json --format html --out report.html
+
+# Record every scan to an append-only JSONL history and print the score trend
+probity scan --source idp.json --history history.jsonl
+
+# Map the same evidence to other regulations (NIS2 is always on the control)
+probity scan --source idp.json --framework all      # nis2 | dora | ai_act | all
+
+# Run on a schedule and alert on regressions (stdout / file / webhook)
+probity watch --source idp.json --history history.jsonl --interval 3600 \
+    --alert-file alerts.jsonl --alert-webhook https://hooks.example/probity
+
+# Serve the read-only compliance dashboard built from the history
+probity serve --history history.jsonl --port 8080
+```
+
+Connectors accept either mock fixtures or **real tool exports** — same controls,
+no live credentials needed: osv-scanner (`--osv`), CycloneDX (`--cyclonedx`),
+testssl.sh (`--testssl`), sslyze (`--sslyze`), Veeam (`--veeam`), restic
+(`--restic`).
+
+## Zero runtime dependencies
+
+The core ships with `dependencies = []`. Scheduling uses stdlib `threading`,
+persistence is an append-only JSONL history (no database), the dashboard is
+stdlib `http.server` with hand-built inline SVG, and alert webhooks use
+`urllib`. Nothing to audit but Python itself.
+
 ## Status
 
-Pre-alpha. Building the HARD (deterministic) control set first. See
-[docs/ROADMAP.md](docs/ROADMAP.md) and [docs/CONTROLS.md](docs/CONTROLS.md).
+Pre-alpha. The deterministic (HARD) control set is implemented end-to-end:
+9 controls (C06–C10, C17–C20), JSON/HTML/PDF reporting, history + trend,
+scheduled `watch`, a `serve` dashboard, regression alerts, and DORA / EU AI Act
+cross-framework mapping. See [docs/ROADMAP.md](docs/ROADMAP.md) and
+[docs/CONTROLS.md](docs/CONTROLS.md).
 
 ## Licensing
 
