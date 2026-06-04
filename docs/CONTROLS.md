@@ -12,11 +12,11 @@ Controls map NIS2 Article 21(2) measures to concrete technical checks.
 | C03 | 21(2)(b)        | Centralised logging active                | SIEM + cloud      | HARD | planned |
 | C04 | 21(2)(b)        | Detection and alerting operational        | SIEM rules        | HARD | planned |
 | C05 | 21(2)(b)        | 24h/72h incident notification procedure   | runbooks          | SOFT | planned |
-| C06 | 21(2)(c)        | Backups exist and are recent              | backup API        | HARD | planned |
-| C07 | 21(2)(c)        | Backups restore-tested                    | restore logs      | HARD | planned |
-| C08 | 21(2)(c)        | Immutable / offline backup copy           | storage config    | HARD | planned |
-| C09 | 21(2)(d)        | Dependency inventory (SBOM)               | repos + build     | HARD | planned |
-| C10 | 21(2)(d)        | Known CVEs in dependencies                | SBOM + OSV/NVD     | HARD | planned |
+| C06 | 21(2)(c)        | Backups exist and are recent              | backup API        | HARD | done    |
+| C07 | 21(2)(c)        | Backups restore-tested                    | restore logs      | HARD | done    |
+| C08 | 21(2)(c)        | Immutable / offline backup copy           | storage config    | HARD | done    |
+| C09 | 21(2)(d)        | Dependency inventory (SBOM)               | repos + build     | HARD | done    |
+| C10 | 21(2)(d)        | Known CVEs in dependencies                | SBOM + OSV/NVD     | HARD | done    |
 | C11 | 21(2)(d)        | Critical supplier risk assessed           | vendor list       | SOFT | planned |
 | C12 | 21(2)(e)        | Periodic vulnerability scanning           | scanner API       | HARD | planned |
 | C13 | 21(2)(e)        | CI/CD security (SAST + secret scanning)   | pipeline config   | HARD | planned |
@@ -30,3 +30,22 @@ Controls map NIS2 Article 21(2) measures to concrete technical checks.
 
 Implementation order favours high-pain + low-effort HARD controls first:
 C20, C19, C17, C06, C10, C03, C14, C18.
+
+## Evidence sources
+
+Each control consumes typed Facts, so it runs unchanged against either a mock
+fixture or a real tool export:
+
+| Control(s)   | Real connector (flag)                                  |
+|--------------|--------------------------------------------------------|
+| C06/C07/C08  | Veeam B&R job report (`--veeam`), restic (`--restic`)  |
+| C09          | CycloneDX BOM (`--cyclonedx`)                           |
+| C10          | osv-scanner JSON (`--osv`)                              |
+| C18          | testssl.sh (`--testssl`), sslyze (`--sslyze`)          |
+
+## Cross-framework mapping
+
+The same evidence answers more than one regulation. Each control's NIS2 article
+is the single source of truth; DORA and EU AI Act cross-references live in
+`probity.frameworks.mapping` and are reported with
+`probity scan --framework {nis2,dora,ai_act,all}` — no control is duplicated.
