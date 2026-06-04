@@ -38,7 +38,7 @@ Strategy: ingest real exports of free offline tools (no live credentials).
 - [x] Persistence — reuses the append-only JSONL history (no DB; keeps zero runtime deps).
 - [x] Web dashboard — `probity serve` (stdlib `http.server`, inline-SVG score trend, control grid).
 - [x] Alerts — regression detection between scans → stdout / `--alert-file` / `--alert-webhook` (urllib).
-- [ ] Multi-framework mapping (DORA, AI Act) reusing shared controls — deferred.
+- [x] Multi-framework mapping (DORA, AI Act) reusing shared controls — `probity scan --framework {nis2,dora,ai_act,all}` (NIS2 refs read from the control; DORA/AI Act cross-refs in `frameworks/mapping.py`; per-framework score derived from the same evidence, no control modified).
 
 Design note: the roadmap originally proposed Postgres/Timescale + a JS dashboard.
 That was dropped to preserve Probity's zero-runtime-dependency guarantee — the
