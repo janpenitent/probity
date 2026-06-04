@@ -23,8 +23,12 @@ Core model, plugin engine, file-backed mock connector, CI, docs, licence.
 - PDF export (done) — zero-dep pure-Python writer, paginated Courier text, `--format pdf --out`.
 
 ## E5 — Real connectors
-- Microsoft Entra ID / LDAP (identity), Azure + AWS config (encryption, assets),
-  SIEM (logging), backup vendors.
+Strategy: ingest real exports of free offline tools (no live credentials).
+- [x] E5a OsvConnector — `osv-scanner --format json` -> C10 (`--osv`).
+- [x] E5b CycloneDxConnector — real CycloneDX JSON BOM -> C09 (`--cyclonedx`).
+- [ ] testssl/sslyze JSON -> C18; real backup-vendor export -> C06/07/08.
+- Later (live APIs): Microsoft Entra ID / LDAP (identity), Azure + AWS config
+  (encryption, assets), SIEM (logging), backup vendors.
 
 ## E6 — Service + dashboard
 - Scheduled scans, persistence (Postgres/Timescale), web dashboard, alerts.

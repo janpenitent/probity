@@ -92,3 +92,23 @@ def test_scan_pdf_without_out_errors(capsys):
         assert "requires --out" in str(exc.code)
     else:  # pragma: no cover - guard against silent success
         raise AssertionError("expected SystemExit when --out is missing")
+
+
+def test_scan_with_cyclonedx_feeds_c09(capsys, tmp_path):
+    # a real CycloneDX BOM with a current timestamp should pass C09
+    bom = tmp_path / "bom.json"
+    bom.write_text(
+        json.dumps(
+            {
+                "bomFormat": "CycloneDX",
+                "specVersion": "1.5",
+                "metadata": {"timestamp": "2026-06-01T00:00:00+00:00"},
+                "components": [{"type": "library", "name": "requests", "version": "2.32.0"}],
+            }
+        )
+    )
+    main(["scan", "--source", FIXTURE, "--cyclonedx", str(bom), "--format", "json"])
+    out = capsys.readouterr().out
+    report = json.loads(out)
+    c09 = next(f for f in report["findings"] if f["control_id"] == "C09")
+    assert c09["status"] == "pass"
