@@ -18,6 +18,11 @@ classifiers = [
 ]
 dependencies = []
 
+[project.urls]
+Homepage = "https://github.com/janpenitent/probity"
+Repository = "https://github.com/janpenitent/probity"
+Issues = "https://github.com/janpenitent/probity/issues"
+
 [project.scripts]
 probity = "probity.cli:main"
 
