@@ -2,12 +2,12 @@
 # Copyright (c) 2026 Janier Rodríguez
 
 import json
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 from probity.cli import main
 
 FIXTURE = str(Path(__file__).parent / "fixtures" / "idp_sample.json")
-HARD_FIXTURE = str(Path(__file__).parent / "fixtures" / "hard_sample.json")
 
 
 def test_scan_text_returns_nonzero_when_a_control_fails(capsys):
@@ -267,7 +267,52 @@ def test_scan_with_trivy_feeds_c12(capsys, tmp_path):
     assert c12["status"] == "pass"
 
 
-def test_scan_with_hard_sources_feeds_all_hard_controls(capsys):
+def test_scan_with_hard_sources_feeds_all_hard_controls(capsys, tmp_path):
+    # The HARD controls apply freshness windows against the wall clock, so a
+    # static fixture rots: its "fresh" timestamps eventually fall outside the
+    # window and the healthy case starts failing on a later run date. Build the
+    # fixture relative to now so this test stays date-independent.
+    now = datetime.now(UTC)
+
+    def ago(**kw: int) -> str:
+        return (now - timedelta(**kw)).isoformat()
+
+    fixture = tmp_path / "hard.json"
+    fixture.write_text(
+        json.dumps(
+            {
+                "assets": [
+                    {"id": "vm-1", "name": "prod-db", "type": "vm",
+                     "managed": True, "last_seen": ago(hours=1)},
+                ],
+                "vulnscans": [
+                    {"id": "vm-1", "asset": "prod-db", "critical": True,
+                     "last_scan": ago(days=5), "scanner": "nessus"},
+                ],
+                "patches": [
+                    {"id": "vm-1", "host": "prod-db", "critical": True,
+                     "last_patched": ago(days=5), "pending_critical": 0},
+                ],
+                "log_sources": [
+                    {"id": "src-1", "asset": "prod-db", "critical": True,
+                     "forwarding": True, "last_event": ago(hours=1)},
+                ],
+                "detection_rules": [
+                    {"id": "rule-1", "name": "Impossible travel",
+                     "enabled": True, "last_tested": ago(days=10)},
+                ],
+                "pipelines": [
+                    {"id": "repo-app", "repo": "org/app",
+                     "sast_enabled": True, "secret_scanning_enabled": True},
+                ],
+                "training": [
+                    {"id": "u-1", "person": "Alice", "required": True,
+                     "completed_at": ago(days=30)},
+                ],
+            }
+        )
+    )
+    hard = str(fixture)
     # the healthy hard fixture should drive every HARD control to pass.
     main(
         [
@@ -275,13 +320,13 @@ def test_scan_with_hard_sources_feeds_all_hard_controls(capsys):
             "--source",
             FIXTURE,
             "--assets",
-            HARD_FIXTURE,
+            hard,
             "--siem",
-            HARD_FIXTURE,
+            hard,
             "--pipeline",
-            HARD_FIXTURE,
+            hard,
             "--training",
-            HARD_FIXTURE,
+            hard,
             "--format",
             "json",
         ]
