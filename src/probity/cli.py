@@ -30,11 +30,11 @@ from probity.connectors.trivy_connector import TrivyConnector
 from probity.connectors.veeam_connector import VeeamConnector
 from probity.controls import ALL_CONTROLS
 from probity.engine.runner import Scan
-from probity.frameworks.mapping import Framework, FrameworkCoverage, all_coverage, coverage
 from probity.model.enums import Status
 from probity.model.finding import Report
 from probity.report.history import Trend, append_snapshot, compute_trend, load_snapshots
 from probity.report.registry import all_formats
+from probity.scan_addons.registry import discovered_addons
 
 # Active controls come from the single-source-of-truth registry in
 # probity.controls so the catalogue cannot drift between the CLI and runner.
@@ -93,11 +93,11 @@ def _configure_scan(parser: argparse.ArgumentParser) -> None:
         "--history",
         help="Append-only JSONL store; records this scan and reports the score trend.",
     )
-    parser.add_argument(
-        "--framework",
-        choices=["nis2", "dora", "ai_act", "all"],
-        help="Also print per-framework coverage mapping the same evidence to NIS2/DORA/AI Act.",
-    )
+    # Externally registered scan add-ons (e.g. the Enterprise multi-framework
+    # coverage view) contribute their own flags here, so Core never has to be
+    # edited to gain post-scan behaviour.
+    for addon in discovered_addons():
+        addon.add_arguments(parser)
 
 
 # Core ships a single command. Service commands (watch/serve) are Enterprise-only
@@ -224,24 +224,6 @@ def build_connectors(args: argparse.Namespace) -> list[Connector]:
     return connectors
 
 
-def _render_coverage(fc: FrameworkCoverage) -> str:
-    lines = [f"{fc.title} — score {fc.score}% ({fc.mapped_count} controls mapped)"]
-    for c in fc.controls:
-        refs = ", ".join(c.refs)
-        lines.append(f"  [{c.status.upper():>14}] {c.control_id} {c.title} → {refs}")
-    return "\n".join(lines)
-
-
-def _emit_frameworks(report: Report, framework: str) -> None:
-    if framework == "all":
-        views = all_coverage(report)
-    else:
-        views = (coverage(report, Framework(framework)),)
-    print("\nFramework coverage")
-    for fc in views:
-        print(_render_coverage(fc))
-
-
 def _run_scan(args: argparse.Namespace) -> int:
     report = Scan(build_connectors(args), CONTROLS).run()
     _emit(report, args.format, args.out)
@@ -249,8 +231,10 @@ def _run_scan(args: argparse.Namespace) -> int:
         append_snapshot(report, args.history)
         trend = compute_trend(load_snapshots(args.history))
         print(_render_trend(trend))
-    if args.framework:
-        _emit_frameworks(report, args.framework)
+    # Registered scan add-ons run after the report is emitted. Each is inert
+    # unless its own flag is set, so default scan output is unchanged.
+    for addon in discovered_addons():
+        addon.after_scan(report, args)
     failed = any(f.status is Status.FAIL for f in report.findings)
     return 1 if failed else 0
 
