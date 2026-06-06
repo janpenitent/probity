@@ -74,7 +74,15 @@ Phased so the Core stays green and installable throughout.
    pluggable — defer until they actually move to Enterprise in step 4.
 3. **Create the closed Enterprise repo** (`probity-enterprise`, private),
    overlaying Core the way `enterprise/` overlays `openuds/` — symlink/install
-   into a shared venv for dev.
+   into a shared venv for dev. ✅
+   Done: private repo `github.com/janpenitent/probity-enterprise`, sibling
+   `~/work/probity-enterprise`, proprietary license, hatchling + ruff/mypy
+   mirroring Core. Carries a smoke overlay (`enterprise-health` report format,
+   `--enterprise-demo` connector source) that proves cross-package discovery
+   end to end via Core's entry-point groups. Dev install:
+   `pip install -e ../probity-enterprise --no-deps` into Core's venv. Core also
+   gained a PEP 561 `py.typed` marker so the overlay (and PyPI consumers) see
+   its types.
 4. **Move the Enterprise modules** out of Core into the new repo; in Core leave
    only the framework + offline connectors + JSON/text/HTML + the 20 controls.
    Keep Core's tests green after each move.
