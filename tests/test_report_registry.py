@@ -2,14 +2,15 @@
 # Copyright (c) 2026 Janier Rodríguez
 
 import probity.report.registry as reg
-from probity.report.registry import ReportFormat, all_formats
+from probity.report.registry import BUILTIN_FORMATS, ReportFormat
 
 
 def test_builtin_formats_present():
-    fmts = all_formats()
-    assert {"text", "json", "html", "pdf"} <= set(fmts)
-    # PDF is binary (always needs a file); text formats render to str.
-    assert fmts["pdf"].binary is True
+    fmts = {fmt.name: fmt for fmt in BUILTIN_FORMATS}
+    # Core ships text/json/html only. PDF is Enterprise-only, registered via the
+    # entry point — so it must not be a builtin (independent of what's installed).
+    assert set(fmts) == {"text", "json", "html"}
+    assert "pdf" not in fmts
     assert fmts["json"].binary is False
 
 
