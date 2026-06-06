@@ -40,7 +40,7 @@ def test_discovered_source_connector_is_built(monkeypatch):
     monkeypatch.setattr(cli, "discovered_sources", lambda: [src])
 
     args = cli.build_parser().parse_args(["scan", "--source", "x.json"])
-    connectors = cli._connectors_from_args(args)
+    connectors = cli.build_connectors(args)
 
     # External connector lands in the run without any edit to cli.py's builtins.
     assert sentinel in connectors
