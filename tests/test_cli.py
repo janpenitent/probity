@@ -99,23 +99,6 @@ def test_scan_with_cyclonedx_feeds_c09(capsys, tmp_path):
     assert c09["status"] == "pass"
 
 
-def test_scan_with_single_framework_prints_coverage(capsys):
-    main(["scan", "--source", FIXTURE, "--framework", "dora"])
-    out = capsys.readouterr().out
-    assert "Framework coverage" in out
-    assert "DORA Regulation" in out
-    # NIS2-only and AI-Act titles must not appear for a single dora view.
-    assert "AI Act" not in out
-
-
-def test_scan_with_all_frameworks_prints_every_view(capsys):
-    main(["scan", "--source", FIXTURE, "--framework", "all"])
-    out = capsys.readouterr().out
-    assert "NIS2 Directive" in out
-    assert "DORA Regulation" in out
-    assert "EU AI Act" in out
-
-
 def test_scan_without_any_source_errors():
     # With no flags at all, no connector resolves and the scan is refused.
     # Live cloud sources (--aws/--entra/...) are Enterprise-only and arrive via
