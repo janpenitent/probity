@@ -11,7 +11,6 @@ from probity.model.finding import Report
 from probity.plugins import load_plugins
 from probity.report.html_report import to_html
 from probity.report.json_report import to_json
-from probity.report.pdf_report import to_pdf
 from probity.report.text_report import to_text
 
 # Entry-point group the Enterprise package (or any third party) registers extra
@@ -32,13 +31,13 @@ class ReportFormat:
     binary: bool = False
 
 
-# Core formats. These ship in the open AGPL Core; PDF stays here for now but is
-# an Enterprise candidate (see docs/TIERING.md).
+# Core formats. These ship in the open AGPL Core. The inspector-grade audit PDF
+# is Enterprise-only — it registers via the entry-point group below (see
+# docs/TIERING.md).
 BUILTIN_FORMATS: tuple[ReportFormat, ...] = (
     ReportFormat("text", to_text),
     ReportFormat("json", to_json),
     ReportFormat("html", to_html),
-    ReportFormat("pdf", to_pdf, binary=True),
 )
 
 
