@@ -4,8 +4,10 @@
 from __future__ import annotations
 
 import argparse
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
+from typing import cast
 
+from probity.commands.registry import Command, discovered_commands
 from probity.connectors.base import Connector
 from probity.connectors.cyclonedx_connector import CycloneDxConnector
 from probity.connectors.mock_assets import MockAssetsConnector
@@ -33,20 +35,19 @@ from probity.model.enums import Status
 from probity.model.finding import Report
 from probity.report.history import Trend, append_snapshot, compute_trend, load_snapshots
 from probity.report.registry import all_formats
-from probity.service.dashboard import serve
-from probity.service.scheduler import AlertSinks, ScanScheduler
 
 # Active controls come from the single-source-of-truth registry in
 # probity.controls so the catalogue cannot drift between the CLI and runner.
 CONTROLS = ALL_CONTROLS
 
 
-def _add_source_args(parser: argparse.ArgumentParser) -> None:
-    """Attach the shared connector-source flags used by ``scan`` and ``watch``.
+def add_source_args(parser: argparse.ArgumentParser) -> None:
+    """Attach the shared connector-source flags to ``parser``.
 
-    Identity facts come from a file source (``--source``). Live identity sources
-    (e.g. Entra) are contributed by externally registered connector sources, so
-    Core never has to be edited to gain them.
+    Public so registered commands (e.g. the Enterprise ``watch``) can reuse the
+    exact same source flags as ``scan``. Identity facts come from a file source
+    (``--source``); live identity sources (e.g. Entra) are contributed by
+    externally registered connector sources, so Core never has to be edited.
     """
     parser.add_argument("--source", help="Path to identity source JSON (mock_idp).")
     parser.add_argument("--cloud", help="Path to cloud storage source JSON (mock_cloud).")
@@ -81,47 +82,50 @@ def _add_source_args(parser: argparse.ArgumentParser) -> None:
         source.add_arguments(parser)
 
 
-def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(
-        prog="probity", description="Continuous NIS2 compliance evidence."
-    )
-    sub = parser.add_subparsers(dest="command", required=True)
-
-    scan = sub.add_parser("scan", help="Run controls against sources and emit findings.")
-    _add_source_args(scan)
-    scan.add_argument("--format", choices=sorted(all_formats()), default="text")
-    scan.add_argument(
+def _configure_scan(parser: argparse.ArgumentParser) -> None:
+    add_source_args(parser)
+    parser.add_argument("--format", choices=sorted(all_formats()), default="text")
+    parser.add_argument(
         "--out",
         help="Write the report to this file instead of stdout (required for --format pdf).",
     )
-    scan.add_argument(
+    parser.add_argument(
         "--history",
         help="Append-only JSONL store; records this scan and reports the score trend.",
     )
-    scan.add_argument(
+    parser.add_argument(
         "--framework",
         choices=["nis2", "dora", "ai_act", "all"],
         help="Also print per-framework coverage mapping the same evidence to NIS2/DORA/AI Act.",
     )
 
-    watch = sub.add_parser("watch", help="Run scans on a schedule and alert on regressions.")
-    _add_source_args(watch)
-    watch.add_argument(
-        "--history", required=True, help="Append-only JSONL store the loop records into."
-    )
-    watch.add_argument(
-        "--interval", type=float, default=3600.0, help="Seconds between scans (default 3600)."
-    )
-    watch.add_argument("--alert-file", help="Append regression alerts as JSONL to this path.")
-    watch.add_argument("--alert-webhook", help="POST regression alerts as JSON to this URL.")
-    watch.add_argument(
-        "--once", action="store_true", help="Run a single scan tick and exit (no loop)."
-    )
 
-    serve_p = sub.add_parser("serve", help="Serve the read-only compliance dashboard.")
-    serve_p.add_argument("--history", required=True, help="Append-only JSONL store to render.")
-    serve_p.add_argument("--host", default="127.0.0.1", help="Bind host (default 127.0.0.1).")
-    serve_p.add_argument("--port", type=int, default=8080, help="Bind port (default 8080).")
+# Core ships a single command. Service commands (watch/serve) are Enterprise-only
+# and join via the probity.commands entry point (see docs/TIERING.md).
+BUILTIN_COMMANDS: tuple[Command, ...] = (
+    Command(
+        name="scan",
+        help="Run controls against sources and emit findings.",
+        configure=_configure_scan,
+        run=lambda args: _run_scan(args),
+    ),
+)
+
+
+def _all_commands() -> list[Command]:
+    """Builtin commands plus any registered via entry points (plugins appended)."""
+    return [*BUILTIN_COMMANDS, *discovered_commands()]
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog="probity", description="Continuous NIS2 compliance evidence."
+    )
+    sub = parser.add_subparsers(dest="command", required=True)
+    for command in _all_commands():
+        cp = sub.add_parser(command.name, help=command.help)
+        command.configure(cp)
+        cp.set_defaults(_run=command.run)
     return parser
 
 
@@ -167,12 +171,13 @@ def _emit(report: Report, fmt: str, out: str | None) -> None:
         print(rendered)
 
 
-def _connectors_from_args(args: argparse.Namespace) -> list[Connector]:
+def build_connectors(args: argparse.Namespace) -> list[Connector]:
     """Build the connector list from the shared source flags on ``args``.
 
-    File sources are built first, then any connectors contributed by externally
-    registered sources (plugins). At least one evidence source must resolve to a
-    connector, or the scan is refused.
+    Public so registered commands (e.g. the Enterprise ``watch``) build the
+    exact same connector set as ``scan``. File sources are built first, then any
+    connectors contributed by externally registered sources (plugins). At least
+    one evidence source must resolve to a connector, or the run is refused.
     """
     connectors: list[Connector] = []
     if args.source:
@@ -238,7 +243,7 @@ def _emit_frameworks(report: Report, framework: str) -> None:
 
 
 def _run_scan(args: argparse.Namespace) -> int:
-    report = Scan(_connectors_from_args(args), CONTROLS).run()
+    report = Scan(build_connectors(args), CONTROLS).run()
     _emit(report, args.format, args.out)
     if args.history:
         append_snapshot(report, args.history)
@@ -250,40 +255,12 @@ def _run_scan(args: argparse.Namespace) -> int:
     return 1 if failed else 0
 
 
-def _run_watch(args: argparse.Namespace) -> int:
-    connectors = _connectors_from_args(args)
-    sinks = AlertSinks(to_stdout=True, file=args.alert_file, webhook=args.alert_webhook)
-    scheduler = ScanScheduler(
-        scan_factory=lambda: Scan(connectors, CONTROLS).run(),
-        history_path=args.history,
-        interval_seconds=args.interval,
-        sinks=sinks,
-    )
-    if args.once:
-        alert = scheduler.tick()
-        return 1 if alert.is_actionable else 0
-    print(f"Probity watch — scanning every {args.interval:g}s into {args.history}. Ctrl-C to stop.")
-    try:
-        scheduler.run_forever()
-    except KeyboardInterrupt:
-        print("\nProbity watch stopped.")
-    return 0
-
-
-def _run_serve(args: argparse.Namespace) -> int:
-    serve(args.history, host=args.host, port=args.port)
-    return 0
-
-
 def main(argv: Sequence[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
-    if args.command == "scan":
-        return _run_scan(args)
-    if args.command == "watch":
-        return _run_watch(args)
-    if args.command == "serve":
-        return _run_serve(args)
-    return 2
+    # Every subparser stores its command's run callable under ``_run`` via
+    # set_defaults, so dispatch needs no per-command branch here.
+    run = cast("Callable[[argparse.Namespace], int]", args._run)
+    return run(args)
 
 
 if __name__ == "__main__":
