@@ -116,88 +116,16 @@ def test_scan_with_all_frameworks_prints_every_view(capsys):
     assert "EU AI Act" in out
 
 
-def test_scan_without_identity_source_errors():
+def test_scan_without_any_source_errors():
+    # With no flags at all, no connector resolves and the scan is refused.
+    # Live cloud sources (--aws/--entra/...) are Enterprise-only and arrive via
+    # the connector entry point, so they are not tested in Core.
     try:
-        main(["scan", "--cloud", str(Path(FIXTURE).parent / "cloud_sample.json")])
+        main(["scan"])
     except SystemExit as exc:
-        assert "identity source" in str(exc.code)
+        assert "evidence source" in str(exc.code)
     else:  # pragma: no cover - guard against silent success
-        raise AssertionError("expected SystemExit when no identity source is given")
-
-
-def test_scan_entra_without_env_errors(monkeypatch):
-    for var in (
-        "PROBITY_ENTRA_TENANT_ID",
-        "PROBITY_ENTRA_CLIENT_ID",
-        "PROBITY_ENTRA_CLIENT_SECRET",
-    ):
-        monkeypatch.delenv(var, raising=False)
-    try:
-        main(["scan", "--entra"])
-    except SystemExit as exc:
-        assert "PROBITY_ENTRA_TENANT_ID" in str(exc.code)
-    else:  # pragma: no cover - guard against silent success
-        raise AssertionError("expected SystemExit when Entra env vars are unset")
-
-
-def test_scan_aws_without_env_errors(monkeypatch):
-    for var in (
-        "PROBITY_AWS_ACCESS_KEY_ID",
-        "PROBITY_AWS_SECRET_ACCESS_KEY",
-        "PROBITY_AWS_REGION",
-    ):
-        monkeypatch.delenv(var, raising=False)
-    # A file identity source satisfies the identity-source guard so the AWS
-    # credential check is reached; connectors are lazy, so the missing file is
-    # never read before the SystemExit fires.
-    try:
-        main(["scan", "--source", "missing.json", "--aws"])
-    except SystemExit as exc:
-        assert "PROBITY_AWS_ACCESS_KEY_ID" in str(exc.code)
-    else:  # pragma: no cover - guard against silent success
-        raise AssertionError("expected SystemExit when AWS env vars are unset")
-
-
-def test_scan_aws_monitoring_without_env_errors(monkeypatch):
-    for var in (
-        "PROBITY_AWS_ACCESS_KEY_ID",
-        "PROBITY_AWS_SECRET_ACCESS_KEY",
-        "PROBITY_AWS_REGION",
-    ):
-        monkeypatch.delenv(var, raising=False)
-    try:
-        main(["scan", "--source", "missing.json", "--aws-monitoring"])
-    except SystemExit as exc:
-        assert "PROBITY_AWS_ACCESS_KEY_ID" in str(exc.code)
-    else:  # pragma: no cover - guard against silent success
-        raise AssertionError("expected SystemExit when AWS env vars are unset")
-
-
-def test_scan_gcp_without_env_errors(monkeypatch):
-    for var in ("PROBITY_GCP_ACCESS_TOKEN", "PROBITY_GCP_PROJECT"):
-        monkeypatch.delenv(var, raising=False)
-    try:
-        main(["scan", "--source", "missing.json", "--gcp"])
-    except SystemExit as exc:
-        assert "PROBITY_GCP_ACCESS_TOKEN" in str(exc.code)
-    else:  # pragma: no cover - guard against silent success
-        raise AssertionError("expected SystemExit when GCP env vars are unset")
-
-
-def test_scan_azure_without_env_errors(monkeypatch):
-    for var in (
-        "PROBITY_AZURE_TENANT_ID",
-        "PROBITY_AZURE_CLIENT_ID",
-        "PROBITY_AZURE_CLIENT_SECRET",
-        "PROBITY_AZURE_SUBSCRIPTION_ID",
-    ):
-        monkeypatch.delenv(var, raising=False)
-    try:
-        main(["scan", "--source", "missing.json", "--azure"])
-    except SystemExit as exc:
-        assert "PROBITY_AZURE_TENANT_ID" in str(exc.code)
-    else:  # pragma: no cover - guard against silent success
-        raise AssertionError("expected SystemExit when Azure env vars are unset")
+        raise AssertionError("expected SystemExit when no source is given")
 
 
 def test_scan_with_governance_feeds_soft_controls(capsys, tmp_path):
