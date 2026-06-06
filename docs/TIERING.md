@@ -85,21 +85,35 @@ Phased so the Core stays green and installable throughout.
    its types.
 4. **Move the Enterprise modules** out of Core into the new repo; in Core leave
    only the framework + offline connectors + JSON/text/HTML + the 20 controls.
-   Keep Core's tests green after each move.
+   Keep Core's tests green after each move. ✅
+   Done in four phases (audit PDF; live cloud connectors AWS×2/GCP/Azure/Entra/
+   GitHub; service layer `watch`/`serve`/alerts/dashboard; multi-framework
+   DORA/AI-Act). Two new Core seams were added to host the last two: command
+   registry (`commands.registry.Command` / group `probity.commands`) and scan
+   add-ons (`scan_addons.registry.ScanAddon` / group `probity.scan_addons`).
+   Core now ships only the 20 controls, offline connectors, the `scan` command,
+   and JSON/text/HTML. Core green without the overlay (CI invariant: builtin
+   tests assert the raw builtin tuples, not the entry-point-merged sets).
 5. **Relicense moved Enterprise modules** to the commercial license; Core stays
-   AGPL.
+   AGPL. ✅
+   Every moved module carries `SPDX-License-Identifier: LicenseRef-Proprietary`
+   + `Copyright (c) 2026 Janier Rodríguez. All rights reserved.`; the overlay
+   repo's `LICENSE` is the proprietary all-rights-reserved grant. No AGPL header
+   remains in the overlay. Core's own files stay AGPL-3.0.
 6. **Publish Core to PyPI** as the shopfront (`pip install probity`).
 7. **Commercial licensing**: add a `COMMERCIAL-LICENSE.md` / contact path for the
    AGPL dual-license offer.
 
 ## 4. Open questions for the owner (legal, not technical)
 
-- **Copyright holder.** Headers currently say "Janier Rodríguez", but commits use
-  `@virtualcable.es` and OpenUDS copyrights to **Virtual Cable S.L.U.** Dual
-  licensing requires a single, clear copyright owner. If Probity was built on
-  company time/resources it may already belong to Virtual Cable. This decides
-  *who can sell the commercial license and who earns*. Resolve internally before
-  any commercial offer.
+- **Copyright holder. RESOLVED (2026-06-06): Janier Rodríguez (individual).**
+  The owner has declared himself the sole copyright holder of both the AGPL Core
+  and the proprietary Enterprise overlay. He is therefore the single party able
+  to dual-license the Core and to sell the commercial license, and the party who
+  earns. (The `@virtualcable.es` commit address is the author's verified GitHub
+  identity, not an assignment of ownership to Virtual Cable S.L.U.) All Core
+  headers stay `Copyright (c) 2026 Janier Rodríguez`; overlay headers stay
+  `Copyright (c) 2026 Janier Rodríguez. All rights reserved.`
 - **Contributor License Agreement (CLA).** To keep the right to dual-license, any
   outside contributions to Core need a CLA assigning rights to the copyright
   holder. Add one before accepting external PRs.
