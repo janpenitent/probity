@@ -2,6 +2,12 @@
 
 Probity is a plugin pipeline. Each stage is replaceable and independently testable.
 
+This document describes the **open-source Core** (`pip install probity`, AGPL-3.0).
+The proprietary **Enterprise** overlay adds live cloud connectors, a continuous
+service layer, an audit PDF, and multi-framework mapping — it plugs into the same
+seams documented here via entry points and never forks the Core. See
+[TIERING.md](TIERING.md) for the tier boundary.
+
 ## Pipeline
 
 ```
@@ -21,13 +27,6 @@ Connector.collect() -> [Fact]  -->  FactSet  -->  Control.evaluate(FactSet) -> F
 - **Finding** — the result of one control: status, summary, evidence, NIS2 refs.
 - **Report** — all findings + a compliance `score` + status counts.
 
-## Extension points
-
-- **Connector** (`probity.connectors.base.Connector`): `collect() -> Iterable[Fact]`.
-  Mirrors the UDS module/plugin pattern. Must not raise on empty source.
-- **Control** (`probity.controls.base.Control`): `evaluate(FactSet) -> Finding`.
-  Pure: depends only on the facts, never on live I/O.
-
 ## Engine
 
 `probity.engine.runner.Scan` wires connectors + controls. It isolates control
@@ -36,44 +35,57 @@ aborting the whole scan (no silent swallowing — the error is surfaced).
 
 ## Reporting (`probity.report`)
 
-A `Report` is rendered by independent, pure reporters — `json_report`,
-`html_report`, and a zero-dependency pure-Python `pdf_report` writer. `history`
-appends each scan as one line to an append-only JSONL store (`Snapshot`) and
-derives a `Trend` (score delta vs the previous scan) — the only persistence
-layer, deliberately no database.
+A `Report` is rendered by independent, pure reporters — `text_report`,
+`json_report`, and `html_report`. `history` appends each scan as one line to an
+append-only JSONL store (`Snapshot`) and derives a `Trend` (score delta vs the
+previous scan) — the only persistence layer, deliberately no database.
 
-## Service (`probity.service`)
+> The inspector-grade **PDF** reporter ships in the Enterprise overlay as a
+> `probity.report_formats` plugin (`--format pdf`).
 
-The continuous layer, all stdlib:
+## Extension points
 
-- **scheduler** — `ScanScheduler` runs the pipeline on an interval (`threading`),
-  records each scan to history, and dispatches alerts.
-- **alerts** — pure `detect_transitions` / `build_alert` over consecutive
-  snapshots (fail-closed: an unknown status ranks worst; a recovery alone is not
-  actionable), with stdout / file / webhook (`urllib`) sinks.
-- **dashboard** — `render_dashboard` is a pure function of the history file;
-  `serve` is a thin `http.server` shell around it with an inline-SVG trend.
+Core discovers plugins through `importlib.metadata` entry points
+(`probity.plugins.load_plugins`), so a separate package — the Enterprise overlay
+or a community plugin — can extend Probity without editing Core. Discovery is
+**fail-closed**: a broken plugin raises, it is never silently dropped.
 
-## Frameworks (`probity.frameworks`)
+Four entry-point groups, each backed by a frozen registry type:
 
-`mapping` maps the same evidence onto DORA and the EU AI Act. NIS2 references
-stay on the control (single source of truth); cross-references live in a
-constant table, and `coverage` / `all_coverage` derive a per-framework view
-(mapped controls, statuses, framework-scoped score) from a `Report` without
-modifying any control.
+| Group                   | Registry type                          | Extends                                   |
+|-------------------------|----------------------------------------|-------------------------------------------|
+| `probity.connectors`    | `connectors.registry.ConnectorSource`  | a CLI source flag + its connector builder |
+| `probity.report_formats`| `report.registry.ReportFormat`         | a `--format` value (text/binary)          |
+| `probity.commands`      | `commands.registry.Command`            | a top-level subcommand (e.g. `watch`)     |
+| `probity.scan_addons`   | `scan_addons.registry.ScanAddon`       | extra `scan` flags + post-scan hooks      |
 
-## Module map
+The two base extension contracts a plugin implements:
+
+- **Connector** (`probity.connectors.base.Connector`): `collect() -> Iterable[Fact]`.
+  Mirrors the UDS module/plugin pattern. Must not raise on an empty source.
+- **Control** (`probity.controls.base.Control`): `evaluate(FactSet) -> Finding`.
+  Pure: depends only on the facts, never on live I/O.
+
+> The Enterprise overlay registers its live cloud connectors via
+> `probity.connectors`, the `watch`/`serve` service commands via
+> `probity.commands`, the audit PDF via `probity.report_formats`, and the
+> DORA / EU AI Act `--framework` mapping via `probity.scan_addons`. When the
+> overlay is installed into the same environment, these appear in `probity --help`
+> automatically; without it, Core runs exactly as documented.
+
+## Module map (Core)
 
 ```
 probity/
   model/       Fact, FactSet, Finding, Report, enums   (immutable core types)
-  connectors/  base + mock_* fixtures + real exports    (I/O -> Facts)
-  controls/    base + c06..c20                          (Facts -> Finding, pure)
+  connectors/  base + mock_* fixtures + offline exports (I/O -> Facts)
+  controls/    base + c01..c20                          (Facts -> Finding, pure)
   engine/      runner.Scan                              (wires it together)
-  report/      json / html / pdf / history              (Report -> artifacts)
-  service/     scheduler / alerts / dashboard           (continuous layer)
-  frameworks/  mapping                                  (NIS2 -> DORA / AI Act)
-  cli.py       scan | watch | serve
+  report/      text / json / html + registry + history  (Report -> artifacts)
+  commands/    registry                                 (subcommand seam)
+  scan_addons/ registry                                 (scan-flag / hook seam)
+  plugins.py   entry-point discovery                    (fail-closed loader)
+  cli.py       scan                                     (the one builtin command)
 ```
 
 ## Design rules
@@ -82,4 +94,8 @@ probity/
   explicit "requires human validation" flag.
 - Connectors do I/O; controls do logic. Never mix them — keeps controls trivially
   unit-testable with synthetic facts.
-- Zero runtime dependencies: every layer above is built on the Python stdlib.
+- Zero runtime dependencies: every layer is built on the Python stdlib.
+- Builtin tests assert the raw builtin tuples (`BUILTIN_FORMATS`,
+  `BUILTIN_COMMANDS`), not the entry-point-merged sets — so Core CI stays green
+  with or without the overlay installed.
+```

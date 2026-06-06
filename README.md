@@ -32,10 +32,19 @@ independent unit, so coverage grows control by control.
 ## Quickstart
 
 ```bash
+pip install probity
+probity scan --source tests/fixtures/idp_sample.json
+```
+
+Or from source for development:
+
+```bash
 python -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
 probity scan --source tests/fixtures/idp_sample.json
 ```
+
+Full flag and JSON-shape reference: **[docs/USAGE.md](docs/USAGE.md)**.
 
 ## Commands
 
@@ -67,10 +76,12 @@ They are honest about automation's limit: a missing or overdue artifact is a har
 
 ## Zero runtime dependencies
 
-The core ships with `dependencies = []`. Scheduling uses stdlib `threading`,
-persistence is an append-only JSONL history (no database), the dashboard is
-stdlib `http.server` with hand-built inline SVG, and alert webhooks use
-`urllib`. Nothing to audit but Python itself.
+Core ships with `dependencies = []` — Python standard library only. Persistence
+is an append-only JSONL history (no database); reports are hand-written text,
+JSON, and HTML. Nothing to audit but Python itself. (The Enterprise overlay keeps
+the same discipline: its scheduler is stdlib `threading`, its dashboard is
+`http.server` with hand-built inline SVG, and alert webhooks use `urllib` — still
+zero third-party deps.)
 
 ## Status
 
@@ -82,6 +93,19 @@ text/JSON/HTML reporting and history + trend. The scheduler, dashboard, PDF,
 live cloud connectors, and DORA / EU AI Act mapping live in the proprietary
 Enterprise overlay (see [Licensing](#licensing)).
 See [docs/ROADMAP.md](docs/ROADMAP.md) and [docs/CONTROLS.md](docs/CONTROLS.md).
+
+## Documentation
+
+- **[docs/USAGE.md](docs/USAGE.md)** — install, the `scan` command, every source
+  flag, and the exact JSON shapes Core accepts.
+- **[docs/CONTROLS.md](docs/CONTROLS.md)** — the 20-control NIS2 catalogue and
+  evidence sources.
+- **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** — pipeline, module map, and the
+  four plugin extension points.
+- **[docs/ROADMAP.md](docs/ROADMAP.md)** — what shipped and what's next.
+- **[docs/TIERING.md](docs/TIERING.md)** — the open-core split (Core vs Enterprise).
+- **[CONTRIBUTING.md](CONTRIBUTING.md)** · **[SECURITY.md](SECURITY.md)** —
+  contributing and vulnerability disclosure.
 
 ## Licensing
 

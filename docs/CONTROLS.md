@@ -5,6 +5,12 @@ Controls map NIS2 Article 21(2) measures to concrete technical checks.
 - **HARD** = deterministic (API/config returns a yes/no). Cheap, objective.
 - **SOFT** = requires reasoning over policy text; flagged for human validation.
 
+All 20 controls live in the open-source **Core**. What differs by tier is the
+*evidence source*: Core ingests offline tool exports and file-backed fixtures;
+the Enterprise overlay adds **live** connectors that collect the same facts
+straight from cloud APIs (marked **⊕ Enterprise** below). Because every connector
+emits the same typed `Fact`, a control runs unchanged regardless of source.
+
 | ID  | NIS2 ref        | Control                                   | Source            | Type | Status  |
 |-----|-----------------|-------------------------------------------|-------------------|------|---------|
 | C01 | 21(2)(a)        | Security policy exists and is current     | docs              | SOFT | done    |
@@ -28,56 +34,58 @@ Controls map NIS2 Article 21(2) measures to concrete technical checks.
 | C19 | 21(2)(i)        | Access control: orphan & over-privileged  | IdP + HR          | HARD | done    |
 | C20 | 21(2)(j)        | Multi-factor authentication enforced      | IdP config        | HARD | done    |
 
-Implementation order favours high-pain + low-effort HARD controls first:
+Implementation order favoured high-pain + low-effort HARD controls first:
 C20, C19, C17, C06, C10, C03, C14, C18.
 
 ## Evidence sources
 
-Each control consumes typed Facts, so it runs unchanged against either a mock
-fixture or a real tool export:
+Each control consumes typed Facts, so it runs unchanged against a mock fixture,
+a real offline tool export (Core), or a live cloud API (Enterprise). For the
+exact CLI flags and the JSON shapes Core accepts, see **[USAGE.md](USAGE.md)**.
 
-| Control(s)   | Real connector (flag)                                  |
-|--------------|--------------------------------------------------------|
-| C06/C07/C08  | Veeam B&R job report (`--veeam`), restic (`--restic`)  |
-| C09          | CycloneDX BOM (`--cyclonedx`)                           |
-| C10          | osv-scanner JSON (`--osv`)                              |
-| C18          | testssl.sh (`--testssl`), sslyze (`--sslyze`)          |
-| C19/C20      | **live** Microsoft Entra ID / Graph API (`--entra`)    |
-| C01/C05/C11/C15 | governance records JSON (`--governance`)            |
-| C02/C12/C14  | asset management JSON (`--assets`)                      |
-| C12          | Trivy scan JSON (`--trivy`) — real scanner export       |
-| C03/C04      | SIEM export JSON (`--siem`)                             |
-| C13          | CI/CD pipeline config JSON (`--pipeline`), **live** GitHub REST API (`--github`) |
-| C16          | HR/LMS training records JSON (`--training`)            |
+| Control(s)      | Core source (offline export / fixture, flag)               | ⊕ Enterprise (live API)            |
+|-----------------|------------------------------------------------------------|------------------------------------|
+| C01/C05/C11/C15 | governance records JSON (`--governance`)                   | —                                  |
+| C02             | asset inventory JSON (`--assets`)                          | AWS / GCP / Azure (`--aws`/`--gcp`/`--azure`) |
+| C03             | SIEM export JSON (`--siem`)                                | AWS CloudTrail (`--aws-monitoring`) |
+| C04             | SIEM export JSON (`--siem`)                                | —                                  |
+| C06/C07/C08     | Veeam B&R report (`--veeam`), restic (`--restic`)          | —                                  |
+| C09             | CycloneDX BOM (`--cyclonedx`)                              | —                                  |
+| C10             | osv-scanner JSON (`--osv`)                                 | —                                  |
+| C12             | asset JSON (`--assets`), Trivy scan JSON (`--trivy`)       | —                                  |
+| C13             | CI/CD pipeline config JSON (`--pipeline`)                  | GitHub REST API (`--github`)       |
+| C14             | asset JSON (`--assets`)                                    | AWS SSM patch state (`--aws-monitoring`) |
+| C16             | HR/LMS training records JSON (`--training`)               | —                                  |
+| C17             | cloud config JSON (`--cloud`)                              | AWS / GCP / Azure (`--aws`/`--gcp`/`--azure`) |
+| C18             | testssl.sh (`--testssl`), sslyze (`--sslyze`)             | —                                  |
+| C19/C20         | IdP export JSON (`--source`)                               | Microsoft Entra ID / Graph (`--entra`) |
 
-`--entra` is the first *live* connector: it authenticates to Microsoft Graph
-(OAuth2 client-credentials, stdlib `urllib`, zero deps) and emits the same
-`identity.account` facts as the mock, so C19/C20 run unchanged. Credentials come
-from the environment (`PROBITY_ENTRA_TENANT_ID`, `PROBITY_ENTRA_CLIENT_ID`,
-`PROBITY_ENTRA_CLIENT_SECRET`), never CLI flags. `hr_active` is a sign-in
-staleness proxy (Entra has no HR feed): an account with no successful sign-in in
-90 days is treated as inactive so C19 surfaces it — fail-closed.
+> **⊕ Enterprise (live connectors).** AWS (×2), GCP, Azure, Microsoft Entra ID,
+> and GitHub connectors authenticate to the live API (stdlib `urllib`, zero
+> third-party deps), read credentials **from the environment only** (never CLI
+> flags), and emit the exact same facts as the Core offline connectors above —
+> so every control runs unchanged. They ship in the proprietary overlay; see
+> [TIERING.md](TIERING.md).
 
-`--trivy` ingests a real `trivy ... --format json` export (free, offline, no
-credentials) and emits one `vulnscan.target` per scanned artifact, so C12 runs
-unchanged against either the mock or a real scan. What C12 verifies is scan
-*freshness*: Trivy's `CreatedAt` becomes `last_scan`, and a missing timestamp
-(older Trivy builds) reads as stale — fail-closed. Each scanned artifact is
-treated as in scope; a critical asset that was never scanned produces no fact,
-so pair `--trivy` with an inventory source (`--assets`) to catch that gap. A
-single report object or a JSON array of reports are both accepted.
+### Offline tool exports (Core)
 
-`--github` is the second *live* connector (after `--entra`): it reads
-repositories from the GitHub REST API (stdlib `urllib`, zero deps) and emits the
-same `pipeline.config` facts as `--pipeline`, so C13 runs unchanged. Per repo,
-`secret_scanning_enabled` comes from `security_and_analysis.secret_scanning`, and
-`sast_enabled` is inferred from code-scanning *results* — a repo with at least
-one analysis is actively scanned (CodeQL default setup, an Actions workflow, or a
-third-party uploader all count). A `403`/`404` on the code-scanning endpoint
-(scanning off, no access, or no advanced security) reads as `sast_enabled =
-False` — fail-closed, so C13 surfaces the gap. The access token comes from
-`PROBITY_GITHUB_TOKEN` and an optional org scope from `PROBITY_GITHUB_ORG`
-(otherwise the token user's repos), never CLI flags.
+Core ingests the JSON output of free, offline scanners and backup tools — no
+credentials, no live access. Generate the export, hand the file to Probity:
+
+- **osv-scanner** `--osv` → C10 (dependency CVEs).
+- **Trivy** `--trivy` → C12 (vulnerability scanning). One `vulnscan.target` per
+  scanned artifact; what C12 verifies is scan *freshness* (Trivy's `CreatedAt`
+  becomes `last_scan`, a missing timestamp reads as stale — fail-closed). A
+  critical asset that was never scanned produces no fact, so pair `--trivy` with
+  an inventory source (`--assets`) to catch that gap.
+- **CycloneDX** `--cyclonedx` → C09 (SBOM present and current).
+- **testssl.sh** / **sslyze** `--testssl` / `--sslyze` → C18 (TLS health).
+- **Veeam B&R** / **restic** `--veeam` / `--restic` → C06/C07/C08. restic covers
+  C06 only (one backup job per host, latest snapshot); it omits restore-test and
+  immutability signals, so C07/C08 fail closed honestly.
+
+The exact command to produce each export and the JSON Probity expects are in
+**[USAGE.md](USAGE.md)**.
 
 ### SOFT controls and human validation
 
@@ -132,9 +140,10 @@ typed facts a live integration would:
 Freshness windows: assets 7d, logging 24h, detection 90d, scanning 30d,
 patching 30d, training 365d.
 
-## Cross-framework mapping
+## Cross-framework mapping (⊕ Enterprise)
 
 The same evidence answers more than one regulation. Each control's NIS2 article
-is the single source of truth; DORA and EU AI Act cross-references live in
-`probity.frameworks.mapping` and are reported with
-`probity scan --framework {nis2,dora,ai_act,all}` — no control is duplicated.
+is the single source of truth (read from each finding's own `nis2_refs`); DORA
+and EU AI Act cross-references are derived without duplicating any control. This
+mapping (`probity scan --framework {nis2,dora,ai_act,all}`) ships in the
+Enterprise overlay as a `probity.scan_addons` plugin.
