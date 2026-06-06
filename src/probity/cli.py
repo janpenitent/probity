@@ -4,17 +4,10 @@
 from __future__ import annotations
 
 import argparse
-import os
 from collections.abc import Sequence
 
-from probity.connectors.aws_connector import AwsConnector
-from probity.connectors.aws_monitoring_connector import AwsMonitoringConnector
-from probity.connectors.azure_connector import AzureConnector
 from probity.connectors.base import Connector
 from probity.connectors.cyclonedx_connector import CycloneDxConnector
-from probity.connectors.entra_connector import EntraConnector
-from probity.connectors.gcp_connector import GcpComputeConnector
-from probity.connectors.github_connector import GitHubConnector
 from probity.connectors.mock_assets import MockAssetsConnector
 from probity.connectors.mock_backup import MockBackupConnector
 from probity.connectors.mock_cloud import MockCloudConnector
@@ -48,71 +41,14 @@ from probity.service.scheduler import AlertSinks, ScanScheduler
 CONTROLS = ALL_CONTROLS
 
 
-# Env vars holding the Entra app-registration credentials. Never accepted as
-# CLI flags (would leak into shell history / process listings) — read from the
-# environment only, validated at connector construction.
-_ENTRA_ENV = {
-    "tenant_id": "PROBITY_ENTRA_TENANT_ID",
-    "client_id": "PROBITY_ENTRA_CLIENT_ID",
-    "client_secret": "PROBITY_ENTRA_CLIENT_SECRET",
-}
-
-# GitHub access token (required) and optional org scope for the C13 connector.
-# The token is read from the environment only — never a CLI flag — so it cannot
-# leak into shell history or process listings. PROBITY_GITHUB_ORG is optional:
-# unset scans the token user's own repos.
-_GITHUB_TOKEN_ENV = "PROBITY_GITHUB_TOKEN"
-_GITHUB_ORG_ENV = "PROBITY_GITHUB_ORG"
-
-# AWS credentials for the EC2/EBS connector (C02/C17). Read from the environment
-# only — never CLI flags — so the secret access key cannot leak into shell
-# history or process listings. The session token is optional (STS / SSO creds).
-_AWS_ENV = {
-    "access_key": "PROBITY_AWS_ACCESS_KEY_ID",
-    "secret_key": "PROBITY_AWS_SECRET_ACCESS_KEY",
-    "region": "PROBITY_AWS_REGION",
-}
-_AWS_SESSION_TOKEN_ENV = "PROBITY_AWS_SESSION_TOKEN"
-
-# GCP credentials for the Compute Engine connector (C02/C17). A short-lived
-# OAuth2 access token (from `gcloud auth print-access-token` or Workload
-# Identity) and the target project are read from the environment only — never
-# CLI flags. A service-account key is not accepted: minting a token from one
-# needs RS256 JWT signing, which the stdlib cannot do without a crypto
-# dependency, breaking Probity's zero-dependency contract.
-_GCP_ENV = {
-    "access_token": "PROBITY_GCP_ACCESS_TOKEN",
-    "project": "PROBITY_GCP_PROJECT",
-}
-
-# Azure credentials for the ARM Compute connector (C02/C17). Same Azure AD
-# client-credentials grant as Entra (no JWT signing), with the ARM token scope
-# and a target subscription. Read from the environment only — never CLI flags —
-# so the client secret cannot leak into shell history or process listings.
-_AZURE_ENV = {
-    "tenant_id": "PROBITY_AZURE_TENANT_ID",
-    "client_id": "PROBITY_AZURE_CLIENT_ID",
-    "client_secret": "PROBITY_AZURE_CLIENT_SECRET",
-    "subscription_id": "PROBITY_AZURE_SUBSCRIPTION_ID",
-}
-
-
 def _add_source_args(parser: argparse.ArgumentParser) -> None:
     """Attach the shared connector-source flags used by ``scan`` and ``watch``.
 
-    Identity facts come from either a file source (``--source``) or a live
-    Entra tenant (``--entra``); at least one is required.
+    Identity facts come from a file source (``--source``). Live identity sources
+    (e.g. Entra) are contributed by externally registered connector sources, so
+    Core never has to be edited to gain them.
     """
     parser.add_argument("--source", help="Path to identity source JSON (mock_idp).")
-    parser.add_argument(
-        "--entra",
-        action="store_true",
-        help=(
-            "Collect identities live from Microsoft Entra ID. Reads credentials from "
-            f"{_ENTRA_ENV['tenant_id']}, {_ENTRA_ENV['client_id']}, "
-            f"{_ENTRA_ENV['client_secret']}."
-        ),
-    )
     parser.add_argument("--cloud", help="Path to cloud storage source JSON (mock_cloud).")
     parser.add_argument("--tls", help="Path to TLS endpoint source JSON (mock_tls).")
     parser.add_argument("--testssl", help="Path to real testssl.sh --jsonfile output.")
@@ -138,53 +74,7 @@ def _add_source_args(parser: argparse.ArgumentParser) -> None:
         help="Path to SIEM JSON (log sources + detection rules) for C03/C04.",
     )
     parser.add_argument("--pipeline", help="Path to CI/CD pipeline config JSON for C13.")
-    parser.add_argument(
-        "--github",
-        action="store_true",
-        help=(
-            "Collect pipeline security live from GitHub for C13. Reads the access token "
-            f"from {_GITHUB_TOKEN_ENV} and an optional org from {_GITHUB_ORG_ENV}."
-        ),
-    )
     parser.add_argument("--training", help="Path to HR/LMS training records JSON for C16.")
-    parser.add_argument(
-        "--aws",
-        action="store_true",
-        help=(
-            "Collect EC2 instances (C02) and EBS volumes (C17) live from AWS. Reads "
-            f"credentials from {_AWS_ENV['access_key']}, {_AWS_ENV['secret_key']}, "
-            f"{_AWS_ENV['region']} (and optional {_AWS_SESSION_TOKEN_ENV})."
-        ),
-    )
-    parser.add_argument(
-        "--aws-monitoring",
-        action="store_true",
-        help=(
-            "Collect CloudTrail logging (C03) and SSM patch state (C14) live from "
-            f"AWS. Reads the same credentials as --aws ({_AWS_ENV['access_key']}, "
-            f"{_AWS_ENV['secret_key']}, {_AWS_ENV['region']}, optional "
-            f"{_AWS_SESSION_TOKEN_ENV})."
-        ),
-    )
-    parser.add_argument(
-        "--gcp",
-        action="store_true",
-        help=(
-            "Collect Compute Engine instances (C02) and persistent disks (C17) live "
-            f"from Google Cloud. Reads an OAuth2 access token from "
-            f"{_GCP_ENV['access_token']} and the project from {_GCP_ENV['project']}."
-        ),
-    )
-    parser.add_argument(
-        "--azure",
-        action="store_true",
-        help=(
-            "Collect virtual machines (C02) and managed disks (C17) live from "
-            f"Microsoft Azure. Reads {_AZURE_ENV['tenant_id']}, "
-            f"{_AZURE_ENV['client_id']}, {_AZURE_ENV['client_secret']} and "
-            f"{_AZURE_ENV['subscription_id']} from the environment."
-        ),
-    )
     # Externally registered connector sources (e.g. the Enterprise package) add
     # their own flags here, so the CLI never has to be edited to gain them.
     for source in discovered_sources():
@@ -277,98 +167,16 @@ def _emit(report: Report, fmt: str, out: str | None) -> None:
         print(rendered)
 
 
-def _entra_from_env() -> EntraConnector:
-    """Build an EntraConnector from the credential env vars, or fail clearly."""
-    creds: dict[str, str] = {}
-    for arg, var in _ENTRA_ENV.items():
-        value = os.environ.get(var)
-        if not value:
-            raise SystemExit(f"--entra requires {var} to be set in the environment")
-        creds[arg] = value
-    return EntraConnector(creds["tenant_id"], creds["client_id"], creds["client_secret"])
-
-
-def _github_from_env() -> GitHubConnector:
-    """Build a GitHubConnector from the token env var, or fail clearly."""
-    token = os.environ.get(_GITHUB_TOKEN_ENV)
-    if not token:
-        raise SystemExit(f"--github requires {_GITHUB_TOKEN_ENV} to be set in the environment")
-    return GitHubConnector(token, os.environ.get(_GITHUB_ORG_ENV) or None)
-
-
-def _aws_creds(flag: str) -> dict[str, str]:
-    """Read the shared AWS credential env vars, or fail clearly for ``flag``."""
-    creds: dict[str, str] = {}
-    for arg, var in _AWS_ENV.items():
-        value = os.environ.get(var)
-        if not value:
-            raise SystemExit(f"{flag} requires {var} to be set in the environment")
-        creds[arg] = value
-    return creds
-
-
-def _aws_from_env() -> AwsConnector:
-    """Build an AwsConnector from the credential env vars, or fail clearly."""
-    creds = _aws_creds("--aws")
-    return AwsConnector(
-        creds["access_key"],
-        creds["secret_key"],
-        creds["region"],
-        session_token=os.environ.get(_AWS_SESSION_TOKEN_ENV) or None,
-    )
-
-
-def _aws_monitoring_from_env() -> AwsMonitoringConnector:
-    """Build an AwsMonitoringConnector from the credential env vars, or fail clearly."""
-    creds = _aws_creds("--aws-monitoring")
-    return AwsMonitoringConnector(
-        creds["access_key"],
-        creds["secret_key"],
-        creds["region"],
-        session_token=os.environ.get(_AWS_SESSION_TOKEN_ENV) or None,
-    )
-
-
-def _gcp_from_env() -> GcpComputeConnector:
-    """Build a GcpComputeConnector from the env vars, or fail clearly."""
-    creds: dict[str, str] = {}
-    for arg, var in _GCP_ENV.items():
-        value = os.environ.get(var)
-        if not value:
-            raise SystemExit(f"--gcp requires {var} to be set in the environment")
-        creds[arg] = value
-    return GcpComputeConnector(creds["access_token"], creds["project"])
-
-
-def _azure_from_env() -> AzureConnector:
-    """Build an AzureConnector from the env vars, or fail clearly."""
-    creds: dict[str, str] = {}
-    for arg, var in _AZURE_ENV.items():
-        value = os.environ.get(var)
-        if not value:
-            raise SystemExit(f"--azure requires {var} to be set in the environment")
-        creds[arg] = value
-    return AzureConnector(
-        creds["tenant_id"],
-        creds["client_id"],
-        creds["client_secret"],
-        creds["subscription_id"],
-    )
-
-
 def _connectors_from_args(args: argparse.Namespace) -> list[Connector]:
     """Build the connector list from the shared source flags on ``args``.
 
-    Identity facts (C19/C20) come from ``--source`` and/or ``--entra``; at
-    least one must be supplied.
+    File sources are built first, then any connectors contributed by externally
+    registered sources (plugins). At least one evidence source must resolve to a
+    connector, or the scan is refused.
     """
-    if not args.source and not args.entra:
-        raise SystemExit("provide an identity source: --source FILE and/or --entra")
     connectors: list[Connector] = []
     if args.source:
         connectors.append(MockIdpConnector(args.source))
-    if args.entra:
-        connectors.append(_entra_from_env())
     if args.cloud:
         connectors.append(MockCloudConnector(args.cloud))
     if args.tls:
@@ -401,21 +209,13 @@ def _connectors_from_args(args: argparse.Namespace) -> list[Connector]:
         connectors.append(MockSiemConnector(args.siem))
     if args.pipeline:
         connectors.append(MockPipelineConnector(args.pipeline))
-    if args.github:
-        connectors.append(_github_from_env())
     if args.training:
         connectors.append(MockTrainingConnector(args.training))
-    if args.aws:
-        connectors.append(_aws_from_env())
-    if args.aws_monitoring:
-        connectors.append(_aws_monitoring_from_env())
-    if args.gcp:
-        connectors.append(_gcp_from_env())
-    if args.azure:
-        connectors.append(_azure_from_env())
     # Append connectors contributed by externally registered sources (plugins).
     for source in discovered_sources():
         connectors.extend(source.build(args))
+    if not connectors:
+        raise SystemExit("provide at least one evidence source (e.g. --source FILE)")
     return connectors
 
 
