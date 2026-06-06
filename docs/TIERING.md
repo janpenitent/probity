@@ -66,7 +66,12 @@ Phased so the Core stays green and installable throughout.
 1. **Define the seam (this doc).** ✅
 2. **Carve an extension point in Core** so Enterprise can register connectors,
    report formats, and service commands without forking the CLI — mirror the
-   existing connector-registry pattern (entry points / plugin discovery).
+   existing connector-registry pattern (entry points / plugin discovery). ✅
+   Done for **connectors** (`probity.plugins.load_plugins`,
+   `connectors.registry.ConnectorSource` / group `probity.connectors`) and
+   **report formats** (`report.registry.ReportFormat` / group
+   `probity.report_formats`). Service commands (`watch`/`serve`) are not yet
+   pluggable — defer until they actually move to Enterprise in step 4.
 3. **Create the closed Enterprise repo** (`probity-enterprise`, private),
    overlaying Core the way `enterprise/` overlays `openuds/` — symlink/install
    into a shared venv for dev.
