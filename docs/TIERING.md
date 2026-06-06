@@ -100,9 +100,20 @@ Phased so the Core stays green and installable throughout.
    + `Copyright (c) 2026 Janier Rodríguez. All rights reserved.`; the overlay
    repo's `LICENSE` is the proprietary all-rights-reserved grant. No AGPL header
    remains in the overlay. Core's own files stay AGPL-3.0.
-6. **Publish Core to PyPI** as the shopfront (`pip install probity`).
+6. **Publish Core to PyPI** as the shopfront (`pip install probity`). ✅
+   Live: `probity 0.1.0` (wheel + sdist) on PyPI, `pip install probity` verified
+   in a clean venv. The dist was rebuilt fresh from the slimmed Core (the prior
+   build predated step 4 and still bundled the moved-out Enterprise modules);
+   the published wheel was checked to contain only Core packages. `[project.urls]`
+   added for the shopfront page.
 7. **Commercial licensing**: add a `COMMERCIAL-LICENSE.md` / contact path for the
-   AGPL dual-license offer.
+   AGPL dual-license offer. ✅
+   `COMMERCIAL-LICENSE.md` in the Core repo root explains when the AGPL needs a
+   commercial alternative (closed/SaaS/proprietary bundling, warranty/support),
+   names Janier Rodríguez as the sole rights holder able to grant it, and routes
+   requests to `jrodriguez@virtualcable.es`. Linked from the README Licensing
+   section. The README was also corrected so it no longer advertises Enterprise
+   features (PDF, `watch`/`serve`, live cloud connectors, `--framework`) as Core.
 
 ## 4. Open questions for the owner (legal, not technical)
 
