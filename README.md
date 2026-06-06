@@ -40,36 +40,26 @@ probity scan --source tests/fixtures/idp_sample.json
 ## Commands
 
 ```bash
-# One-off scan; --format text|json|html|pdf, --out FILE for pdf/files
+# One-off scan; --format text|json|html, --out FILE to write to a file
 probity scan --source idp.json --cloud cloud.json --tls tls.json --format html --out report.html
 
 # Record every scan to an append-only JSONL history and print the score trend
 probity scan --source idp.json --history history.jsonl
-
-# Map the same evidence to other regulations (NIS2 is always on the control)
-probity scan --source idp.json --framework all      # nis2 | dora | ai_act | all
-
-# Run on a schedule and alert on regressions (stdout / file / webhook)
-probity watch --source idp.json --history history.jsonl --interval 3600 \
-    --alert-file alerts.jsonl --alert-webhook https://hooks.example/probity
-
-# Serve the read-only compliance dashboard built from the history
-probity serve --history history.jsonl --port 8080
 ```
 
 Connectors accept either mock fixtures or **real tool exports** — same controls,
 no live credentials needed: osv-scanner (`--osv`), CycloneDX (`--cyclonedx`),
 testssl.sh (`--testssl`), sslyze (`--sslyze`), Veeam (`--veeam`), restic
-(`--restic`). The first **live** connector, Microsoft Entra ID (`--entra`),
-talks to the Graph API directly (OAuth2 client-credentials, stdlib `urllib`,
-still zero deps) to feed C19/C20:
+(`--restic`), Trivy (`--trivy`).
 
-```bash
-export PROBITY_ENTRA_TENANT_ID=... PROBITY_ENTRA_CLIENT_ID=... PROBITY_ENTRA_CLIENT_SECRET=...
-probity scan --entra --format json
-```
+> **Enterprise tier (proprietary overlay, not in this package).** Live cloud
+> connectors (AWS, GCP, Azure, Entra, GitHub), the `watch` scheduler and `serve`
+> dashboard with regression alerts, inspector-grade PDF (`--format pdf`), and
+> DORA / EU AI Act cross-framework mapping (`--framework`) ship in the closed
+> Enterprise tier — they register into this same CLI via entry points when the
+> overlay is installed. See [Licensing](#licensing).
 
-The first **SOFT** controls (C01/C05/C11/C15) reason over governance artifacts —
+The **SOFT** controls (C01/C05/C11/C15) reason over governance artifacts —
 policies, procedures, supplier risk assessments — via `--governance gov.json`.
 They are honest about automation's limit: a missing or overdue artifact is a hard
 `FAIL`, but a present, current one is `PARTIAL` flagged `requires_human_validation`
@@ -87,13 +77,21 @@ stdlib `http.server` with hand-built inline SVG, and alert webhooks use
 Pre-alpha. **All 20 controls are implemented end-to-end**: the full HARD set
 (C02–C04, C06–C10, C12–C14, C16–C20) and the SOFT set (C01, C05, C11, C15) with
 the human-validation flag. The HARD monitoring/asset-plane controls fail closed
-on stale or missing telemetry via a shared freshness helper. Also JSON/HTML/PDF
-reporting, history + trend, scheduled `watch`, a `serve` dashboard, regression
-alerts, a live Entra ID connector, and DORA / EU AI Act cross-framework mapping.
+on stale or missing telemetry via a shared freshness helper. Core also ships
+text/JSON/HTML reporting and history + trend. The scheduler, dashboard, PDF,
+live cloud connectors, and DORA / EU AI Act mapping live in the proprietary
+Enterprise overlay (see [Licensing](#licensing)).
 See [docs/ROADMAP.md](docs/ROADMAP.md) and [docs/CONTROLS.md](docs/CONTROLS.md).
 
 ## Licensing
 
-Core is licensed under **AGPL-3.0-or-later** (see `LICENSE`). A commercial
-licence (for closed/SaaS use without AGPL obligations) and enterprise connectors
-and support are offered separately — the open-core model.
+Core is licensed under **AGPL-3.0-or-later** (see [`LICENSE`](LICENSE)). The
+AGPL requires that if you run a modified Probity as a network service, you make
+your source available to its users under the same terms. If that does not fit
+your use — closed-source, SaaS without source disclosure, or bundling into a
+proprietary product — a **commercial license** is available from the copyright
+holder. See **[COMMERCIAL-LICENSE.md](COMMERCIAL-LICENSE.md)**.
+
+The paid **Enterprise** overlay (live cloud connectors, scheduler/dashboard,
+audit PDF, multi-framework mapping) is proprietary and is sold under that same
+commercial agreement — the open-core model.
