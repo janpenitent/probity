@@ -27,6 +27,7 @@ from probity.connectors.mock_siem import MockSiemConnector
 from probity.connectors.mock_tls import MockTlsConnector
 from probity.connectors.mock_training import MockTrainingConnector
 from probity.connectors.osv_connector import OsvConnector
+from probity.connectors.registry import discovered_sources
 from probity.connectors.restic_connector import ResticConnector
 from probity.connectors.sslyze_connector import SslyzeConnector
 from probity.connectors.testssl_connector import TesttsslConnector
@@ -38,9 +39,7 @@ from probity.frameworks.mapping import Framework, FrameworkCoverage, all_coverag
 from probity.model.enums import Status
 from probity.model.finding import Report
 from probity.report.history import Trend, append_snapshot, compute_trend, load_snapshots
-from probity.report.html_report import to_html
-from probity.report.json_report import to_json
-from probity.report.pdf_report import to_pdf
+from probity.report.registry import all_formats
 from probity.service.dashboard import serve
 from probity.service.scheduler import AlertSinks, ScanScheduler
 
@@ -186,6 +185,10 @@ def _add_source_args(parser: argparse.ArgumentParser) -> None:
             f"{_AZURE_ENV['subscription_id']} from the environment."
         ),
     )
+    # Externally registered connector sources (e.g. the Enterprise package) add
+    # their own flags here, so the CLI never has to be edited to gain them.
+    for source in discovered_sources():
+        source.add_arguments(parser)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -196,7 +199,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     scan = sub.add_parser("scan", help="Run controls against sources and emit findings.")
     _add_source_args(scan)
-    scan.add_argument("--format", choices=["text", "json", "html", "pdf"], default="text")
+    scan.add_argument("--format", choices=sorted(all_formats()), default="text")
     scan.add_argument(
         "--out",
         help="Write the report to this file instead of stdout (required for --format pdf).",
@@ -232,19 +235,6 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def _render_text(report: Report) -> str:
-    lines = [f"Probity scan — score {report.score}%  {report.counts()}"]
-    for finding in report.findings:
-        human = "  ⚑ requires human validation" if finding.requires_human_validation else ""
-        lines.append(
-            f"[{finding.status.value.upper():>14}] {finding.control_id} "
-            f"{finding.title} — {finding.summary}{human}"
-        )
-        for ev in finding.evidence:
-            lines.append(f"    - {ev.description} ({len(ev.items)} items)")
-    return "\n".join(lines)
-
-
 _TREND_ARROW = {"up": "▲", "down": "▼", "flat": "▬", "first": "•"}
 
 
@@ -259,28 +249,26 @@ def _render_trend(trend: Trend) -> str:
     )
 
 
-def _render(report: Report, fmt: str) -> str:
-    if fmt == "json":
-        return to_json(report)
-    if fmt == "html":
-        return to_html(report)
-    return _render_text(report)
-
-
 def _emit(report: Report, fmt: str, out: str | None) -> None:
-    """Write the report in ``fmt`` to ``out`` (file) or stdout.
+    """Render the report in ``fmt`` to ``out`` (file) or stdout via the registry.
 
-    PDF is binary and therefore always requires ``--out``; text formats print
-    to stdout unless a path is given.
+    Binary formats (e.g. PDF) always require ``--out``; text formats print to
+    stdout unless a path is given. The format set is the builtin formats plus any
+    registered by plugins, so this stays correct as Enterprise adds formats.
     """
-    if fmt == "pdf":
+    report_format = all_formats()[fmt]
+    rendered = report_format.render(report)
+    if report_format.binary:
         if not out:
-            raise SystemExit("--format pdf requires --out FILE")
+            raise SystemExit(f"--format {fmt} requires --out FILE")
+        if not isinstance(rendered, bytes):
+            raise TypeError(f"format {fmt!r} is binary but did not render bytes")
         with open(out, "wb") as fh:
-            fh.write(to_pdf(report))
-        print(f"Wrote PDF evidence pack to {out}")
+            fh.write(rendered)
+        print(f"Wrote {fmt} evidence pack to {out}")
         return
-    rendered = _render(report, fmt)
+    if not isinstance(rendered, str):
+        raise TypeError(f"format {fmt!r} is text but did not render str")
     if out:
         with open(out, "w", encoding="utf-8") as fh:
             fh.write(rendered)
@@ -425,6 +413,9 @@ def _connectors_from_args(args: argparse.Namespace) -> list[Connector]:
         connectors.append(_gcp_from_env())
     if args.azure:
         connectors.append(_azure_from_env())
+    # Append connectors contributed by externally registered sources (plugins).
+    for source in discovered_sources():
+        connectors.extend(source.build(args))
     return connectors
 
 
