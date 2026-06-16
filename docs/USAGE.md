@@ -72,9 +72,16 @@ Generate the export, then hand the file to Probity.
 ### Dependency CVEs → C10 (`--osv`)
 
 ```bash
-osv-scanner --format json --output osv.json -r .
+osv-scanner --format json --all-packages --output-file osv.json -L requirements.txt
 probity scan --osv osv.json
 ```
+
+`--all-packages` matters: without it, osv-scanner v2 writes **only the
+vulnerable** packages to the JSON, so Probity can't see your clean ones — C10
+then under-reports ("1 of 1 has a CVE" instead of "1 of 200") and a fully clean
+project reads as `NOT_APPLICABLE` instead of `PASS`. With it, C10 reports
+"N of M" honestly. Point `-L` at a lockfile (`requirements.txt`,
+`poetry.lock`, `package-lock.json`, …) or use `-r .` to walk a directory.
 
 ### Vulnerability scanning → C12 (`--trivy`)
 
@@ -213,9 +220,12 @@ are the Enterprise `watch` / `serve` commands.)
 
 ## Exit status
 
-`probity scan` exits non-zero when it cannot run (bad input, no usable source);
-finding *content* — passes and failures — is reported in the output, not the exit
-code. Parse the JSON report for programmatic gating.
+`probity scan` exits **0** when no control failed, and **1** when at least one
+control returned `FAIL` — so you can gate a CI pipeline on compliance directly
+(`probity scan ... || exit 1`). `PARTIAL`, `NOT_APPLICABLE`, and `ERROR` do not
+by themselves make the exit non-zero. A non-zero exit also occurs when the scan
+cannot run at all (bad input, no usable source). For finer-grained gating, parse
+the JSON report instead of relying on the exit code.
 
 ## Enterprise (live + continuous)
 
