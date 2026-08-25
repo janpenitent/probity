@@ -1,0 +1,52 @@
+name: New control, connector, or report format
+description: Propose evidence Probity Core should be able to collect or check.
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Core covers the 20 NIS2 controls and offline, file-backed evidence sources.
+        Anything that needs live credentials or a running service is usually better
+        shipped as a plugin — see CONTRIBUTING.md, "Writing a plugin instead of
+        patching Core".
+  - type: dropdown
+    id: kind
+    attributes:
+      label: What are you proposing?
+      options:
+        - A control (a new compliance check)
+        - A connector (a new evidence source)
+        - A report format
+        - Something else
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: >
+        What file or export would feed this, and which tool produces it? Include a
+        redacted excerpt of that format if you have one.
+      render: json
+    validations:
+      required: true
+  - type: input
+    id: nis2
+    attributes:
+      label: NIS2 article (for controls)
+      placeholder: "Art.21(2)(d)"
+  - type: textarea
+    id: verdict
+    attributes:
+      label: Pass / fail rule
+      description: >
+        State the exact condition that should pass, fail, or be not-applicable.
+        Controls in Probity fail closed when evidence is missing or stale.
+    validations:
+      required: true
+  - type: checkboxes
+    id: offline
+    attributes:
+      label: Scope check
+      options:
+        - label: This needs no credentials and no network at scan time.

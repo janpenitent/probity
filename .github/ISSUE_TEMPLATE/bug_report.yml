@@ -1,0 +1,55 @@
+name: Bug report
+description: Something in Probity Core behaves incorrectly.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do **not** report a security vulnerability here — see SECURITY.md for the
+        private disclosure route.
+  - type: input
+    id: version
+    attributes:
+      label: Probity version
+      description: Output of `pip show probity | grep Version`, or the commit SHA.
+      placeholder: "0.1.0"
+    validations:
+      required: true
+  - type: input
+    id: python
+    attributes:
+      label: Python version
+      placeholder: "3.13.1"
+    validations:
+      required: true
+  - type: textarea
+    id: command
+    attributes:
+      label: Command
+      description: The exact `probity` invocation, with paths redacted if needed.
+      render: shell
+      placeholder: probity scan --cyclonedx sbom.json --format json
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: What happened
+      description: Paste the output or traceback verbatim.
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence source (optional)
+      description: >
+        A minimal, redacted excerpt of the source file that triggers it. Never
+        paste real credentials, hostnames, or account identifiers.
+      render: json
