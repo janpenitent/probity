@@ -41,7 +41,7 @@ jobs:
       # user can verify what they installed came from here:
       #   gh attestation verify probity-0.1.0-py3-none-any.whl -R janpenitent/probity
       - name: Attest the build provenance
-        uses: actions/attest-build-provenance@v2
+        uses: actions/attest-build-provenance@v4
         with:
           subject-path: dist/*
       - uses: actions/upload-artifact@v4
