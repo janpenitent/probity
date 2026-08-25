@@ -98,9 +98,9 @@ know.
 - [ ] **Fixture policy.** Every connector fixture is synthetic today, but nothing
   enforces it. Add a check that fails on anything resembling a real hostname,
   account id or credential in `tests/`.
-- [ ] **Deprecation policy for the plugin seams.** The four entry points are a
-  public API the moment someone outside writes against them; say what stability
-  they promise before that happens, not after.
+- [x] **Deprecation policy for the plugin seams.** What the four entry points
+  promise, and what is explicitly not covered, is stated in
+  [ARCHITECTURE.md](ARCHITECTURE.md#stability-of-these-seams).
 
 ## Next (not engineering)
 Real-world validation with auditors / compliance teams, user docs polish, and
