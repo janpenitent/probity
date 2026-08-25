@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Report a security vulnerability
+    url: https://github.com/janpenitent/probity/security/advisories/new
+    about: Private disclosure. Never open a public issue for a vulnerability.
+  - name: Commercial licence enquiry
+    url: https://github.com/janpenitent/probity/blob/main/COMMERCIAL-LICENSE.md
+    about: When the AGPL does not fit your distribution model.
