@@ -10,12 +10,27 @@ from probity.connectors.restic_connector import ResticConnector
 
 # Faithful slice of `restic snapshots --json`: two hosts, several snapshots.
 _RESTIC = [
-    {"time": "2026-06-01T02:00:00.000000+00:00", "hostname": "db01",
-     "paths": ["/var/lib/postgresql"], "tags": ["prod-db", "critical"], "short_id": "a1"},
-    {"time": "2026-06-03T02:00:00.000000+00:00", "hostname": "db01",
-     "paths": ["/var/lib/postgresql"], "tags": ["prod-db", "critical"], "short_id": "a2"},
-    {"time": "2026-05-20T02:00:00.000000+00:00", "hostname": "web01",
-     "paths": ["/srv/www"], "tags": ["www"], "short_id": "b1"},
+    {
+        "time": "2026-06-01T02:00:00.000000+00:00",
+        "hostname": "db01",
+        "paths": ["/var/lib/postgresql"],
+        "tags": ["prod-db", "critical"],
+        "short_id": "a1",
+    },
+    {
+        "time": "2026-06-03T02:00:00.000000+00:00",
+        "hostname": "db01",
+        "paths": ["/var/lib/postgresql"],
+        "tags": ["prod-db", "critical"],
+        "short_id": "a2",
+    },
+    {
+        "time": "2026-05-20T02:00:00.000000+00:00",
+        "hostname": "web01",
+        "paths": ["/srv/www"],
+        "tags": ["www"],
+        "short_id": "b1",
+    },
 ]
 
 

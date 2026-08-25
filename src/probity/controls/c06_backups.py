@@ -52,9 +52,7 @@ class C06Backups(Control):
                 f"{self._max_age.total_seconds() / 3600:.0f}h.",
             )
 
-        summary = (
-            f"{len(failing)} of {len(critical)} critical assets lack a recent backup."
-        )
+        summary = f"{len(failing)} of {len(critical)} critical assets lack a recent backup."
         return self._finding(Status.FAIL, summary, failing)
 
     def _staleness(self, fact: Fact, now: datetime) -> tuple[str | None, float | None]:

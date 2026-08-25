@@ -96,8 +96,7 @@ class DocumentControl(SoftControl):
                 (item,),
             )
         return self._pending(
-            f"A {self.artifact_label} is on record and current; "
-            "content requires human validation.",
+            f"A {self.artifact_label} is on record and current; content requires human validation.",
             f"{self.artifact_label.capitalize()} pending human validation",
             (item,),
         )

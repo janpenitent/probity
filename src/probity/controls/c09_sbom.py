@@ -58,9 +58,7 @@ class C09Sbom(Control):
                 f"{self._max_age.days}d.",
             )
 
-        summary = (
-            f"{len(failing)} of {len(components)} components lack a current SBOM."
-        )
+        summary = f"{len(failing)} of {len(components)} components lack a current SBOM."
         return self._finding(Status.FAIL, summary, failing)
 
     def _failure(self, fact: Fact, now: datetime) -> str | None:

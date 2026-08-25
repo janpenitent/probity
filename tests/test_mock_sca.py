@@ -5,13 +5,19 @@ from probity.connectors.mock_sca import DEPENDENCY_KIND, MockScaConnector
 
 
 def test_emits_one_fact_per_dependency():
-    src = {"dependencies": [
-        {"name": "requests", "version": "2.0.0", "ecosystem": "PyPI",
-         "vulnerabilities": [{"id": "CVE-2023-1", "severity": "high",
-                              "fixed_version": "2.31.0"}]},
-        {"name": "flask", "version": "3.0.0", "ecosystem": "PyPI",
-         "vulnerabilities": []},
-    ]}
+    src = {
+        "dependencies": [
+            {
+                "name": "requests",
+                "version": "2.0.0",
+                "ecosystem": "PyPI",
+                "vulnerabilities": [
+                    {"id": "CVE-2023-1", "severity": "high", "fixed_version": "2.31.0"}
+                ],
+            },
+            {"name": "flask", "version": "3.0.0", "ecosystem": "PyPI", "vulnerabilities": []},
+        ]
+    }
     facts = list(MockScaConnector(src).collect())
     assert [f.kind for f in facts] == [DEPENDENCY_KIND, DEPENDENCY_KIND]
     assert {f.key for f in facts} == {"requests@2.0.0", "flask@3.0.0"}

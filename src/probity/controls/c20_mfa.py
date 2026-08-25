@@ -25,9 +25,7 @@ class C20Mfa(Control):
     def evaluate(self, facts: FactSet) -> Finding:
         accounts = facts.of_kind(ACCOUNT_KIND)
         if not accounts:
-            return self._finding(
-                Status.NOT_APPLICABLE, "No identity accounts found to evaluate."
-            )
+            return self._finding(Status.NOT_APPLICABLE, "No identity accounts found to evaluate.")
 
         enabled = [f for f in accounts if f.data.get("enabled", True)]
         without_mfa = [f for f in enabled if not f.data.get("mfa_enabled", False)]

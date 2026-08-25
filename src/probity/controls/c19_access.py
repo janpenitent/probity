@@ -48,9 +48,7 @@ class C19Access(Control):
         )
         return self._finding(Status.FAIL, summary, orphans)
 
-    def _finding(
-        self, status: Status, summary: str, orphans: list[Fact] | None = None
-    ) -> Finding:
+    def _finding(self, status: Status, summary: str, orphans: list[Fact] | None = None) -> Finding:
         evidence: tuple[Evidence, ...] = ()
         if orphans:
             items = tuple(

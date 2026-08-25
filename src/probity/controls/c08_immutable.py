@@ -55,8 +55,7 @@ class C08Immutable(Control):
             )
 
         summary = (
-            f"{len(failing)} of {len(by_asset)} critical assets lack an immutable "
-            "backup copy."
+            f"{len(failing)} of {len(by_asset)} critical assets lack an immutable backup copy."
         )
         return self._finding(Status.FAIL, summary, failing)
 
@@ -72,9 +71,7 @@ class C08Immutable(Control):
                 {
                     "asset": asset,
                     "copies": len(jobs),
-                    "immutable_copies": sum(
-                        1 for j in jobs if j.data.get("immutable", False)
-                    ),
+                    "immutable_copies": sum(1 for j in jobs if j.data.get("immutable", False)),
                 }
                 for asset, jobs in failing
             )

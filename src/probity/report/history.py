@@ -95,7 +95,5 @@ def control_history(
 ) -> tuple[tuple[str, str], ...]:
     """Return (generated_at, status) per snapshot that recorded ``control_id``."""
     return tuple(
-        (s.generated_at, s.statuses[control_id])
-        for s in snapshots
-        if control_id in s.statuses
+        (s.generated_at, s.statuses[control_id]) for s in snapshots if control_id in s.statuses
     )
