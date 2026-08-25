@@ -7,6 +7,7 @@ import argparse
 from collections.abc import Callable, Sequence
 from typing import cast
 
+from probity import __version__
 from probity.commands.registry import Command, discovered_commands
 from probity.connectors.base import Connector
 from probity.connectors.cyclonedx_connector import CycloneDxConnector
@@ -120,6 +121,12 @@ def _all_commands() -> list[Command]:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="probity", description="Continuous NIS2 compliance evidence."
+    )
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=f"probity {__version__}",
+        help="print the version a bug report should quote",
     )
     sub = parser.add_subparsers(dest="command", required=True)
     for command in _all_commands():
