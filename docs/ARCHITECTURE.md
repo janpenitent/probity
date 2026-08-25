@@ -73,6 +73,34 @@ The two base extension contracts a plugin implements:
 > overlay is installed into the same environment, these appear in `probity --help`
 > automatically; without it, Core runs exactly as documented.
 
+### Stability of these seams
+
+The four entry-point groups and the two base contracts above are a **public API**
+from the moment a package outside this repo registers against them. What that
+promise covers, under semantic versioning of the `probity` distribution:
+
+**Covered.** The four group names; the field names and types of the four frozen
+registry records; `Connector.collect()` and `Control.evaluate()`; the shapes of
+`Fact`, `FactSet`, `Finding`, `Report` and the `Status` enum that cross that
+boundary; and `plugins.load_plugins` being fail-closed.
+
+**Not covered.** Anything else in `probity`, including control internals, the
+CLI's private helpers, report rendering, the on-disk JSONL history layout, and
+the set of controls a given release ships. A plugin that reaches past the seams
+is coupled to a version, not to an interface.
+
+**Changing a covered thing.** Breaking changes land only in a major version. One
+minor release must ship first in which the old form still works and emits a
+`DeprecationWarning` naming the replacement, so an installed plugin fails loudly
+during a release the operator can still roll back. Additive changes — a new
+group, a new optional field with a default — are minor. A `Status` value is never
+removed or repurposed; findings are audit evidence and must keep meaning what
+they meant when they were written.
+
+Probity is 0.x, so this is the policy the project holds itself to now, not a
+guarantee inherited from a stable major. It exists to be stated before the first
+outside plugin depends on it rather than after.
+
 ## Module map (Core)
 
 ```
