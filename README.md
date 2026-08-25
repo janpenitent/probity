@@ -1,5 +1,12 @@
 # Probity
 
+[![CI](https://github.com/janpenitent/probity/actions/workflows/ci.yml/badge.svg)](https://github.com/janpenitent/probity/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/janpenitent/probity/actions/workflows/codeql.yml/badge.svg)](https://github.com/janpenitent/probity/actions/workflows/codeql.yml)
+[![PyPI](https://img.shields.io/pypi/v/probity.svg)](https://pypi.org/project/probity/)
+[![Python](https://img.shields.io/pypi/pyversions/probity.svg)](https://pypi.org/project/probity/)
+[![License: AGPL-3.0-or-later](https://img.shields.io/badge/license-AGPL--3.0--or--later-blue.svg)](LICENSE)
+[![Runtime dependencies: 0](https://img.shields.io/badge/runtime%20dependencies-0-brightgreen.svg)](pyproject.toml)
+
 **Continuous, auditable NIS2 compliance evidence. Open-core.**
 
 Probity turns regulatory compliance from a once-a-year static document into
