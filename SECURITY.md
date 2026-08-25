@@ -39,6 +39,22 @@ Please include:
 - Coordinated disclosure: we will agree a disclosure date with you and credit you
   in the advisory and changelog unless you prefer to remain anonymous.
 
+## Verifying what you installed
+
+Releases are built by a GitHub Actions workflow triggered by a `v*` tag, uploaded
+to PyPI through Trusted Publishing (no long-lived token exists), and signed with a
+build provenance attestation. To check that the file you got came from this
+repository and not from someone else:
+
+```bash
+pip download probity --no-deps --no-binary :none:
+gh attestation verify probity-0.1.0-py3-none-any.whl -R janpenitent/probity
+```
+
+The attestation names the workflow, the commit and the tag that produced the
+artefact. A wheel that fails this check did not come from here — treat it as a
+vulnerability report and use the private channel above.
+
 ## Scope
 
 In scope: the Probity Core codebase published from this repository.
