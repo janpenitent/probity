@@ -21,8 +21,11 @@ def test_passes_when_no_vulnerabilities():
 
 def test_fails_on_high_severity_cve():
     facts = _deps(
-        {"name": "requests", "version": "2.0.0",
-         "vulnerabilities": [{"id": "CVE-2023-1", "severity": "high"}]},
+        {
+            "name": "requests",
+            "version": "2.0.0",
+            "vulnerabilities": [{"id": "CVE-2023-1", "severity": "high"}],
+        },
     )
     finding = C10Cves().evaluate(facts)
     assert finding.status is Status.FAIL
@@ -32,16 +35,18 @@ def test_fails_on_high_severity_cve():
 
 def test_fails_on_critical_severity_cve():
     facts = _deps(
-        {"name": "lib", "version": "1.0",
-         "vulnerabilities": [{"id": "C1", "severity": "critical"}]},
+        {
+            "name": "lib",
+            "version": "1.0",
+            "vulnerabilities": [{"id": "C1", "severity": "critical"}],
+        },
     )
     assert C10Cves().evaluate(facts).status is Status.FAIL
 
 
 def test_partial_when_only_medium_or_low():
     facts = _deps(
-        {"name": "lib", "version": "1.0",
-         "vulnerabilities": [{"id": "M1", "severity": "medium"}]},
+        {"name": "lib", "version": "1.0", "vulnerabilities": [{"id": "M1", "severity": "medium"}]},
         {"name": "clean", "version": "2.0", "vulnerabilities": []},
     )
     finding = C10Cves().evaluate(facts)

@@ -22,8 +22,13 @@ def _control() -> C07Restore:
 
 def test_passes_when_recent_successful_restore_test():
     facts = _jobs(
-        {"id": "b1", "asset": "db", "critical": True,
-         "last_restore_test": "2026-05-01T00:00:00+00:00", "restore_test_passed": True},
+        {
+            "id": "b1",
+            "asset": "db",
+            "critical": True,
+            "last_restore_test": "2026-05-01T00:00:00+00:00",
+            "restore_test_passed": True,
+        },
     )
     assert _control().evaluate(facts).status is Status.PASS
 
@@ -36,8 +41,13 @@ def test_fails_when_restore_test_missing():
 
 def test_fails_when_restore_test_stale():
     facts = _jobs(
-        {"id": "b1", "asset": "db", "critical": True,
-         "last_restore_test": "2026-01-01T00:00:00+00:00", "restore_test_passed": True},
+        {
+            "id": "b1",
+            "asset": "db",
+            "critical": True,
+            "last_restore_test": "2026-01-01T00:00:00+00:00",
+            "restore_test_passed": True,
+        },
     )
     finding = _control().evaluate(facts)
     assert finding.status is Status.FAIL
@@ -46,8 +56,13 @@ def test_fails_when_restore_test_stale():
 
 def test_fails_when_restore_test_failed():
     facts = _jobs(
-        {"id": "b1", "asset": "db", "critical": True,
-         "last_restore_test": "2026-05-01T00:00:00+00:00", "restore_test_passed": False},
+        {
+            "id": "b1",
+            "asset": "db",
+            "critical": True,
+            "last_restore_test": "2026-05-01T00:00:00+00:00",
+            "restore_test_passed": False,
+        },
     )
     finding = _control().evaluate(facts)
     assert finding.status is Status.FAIL
@@ -56,8 +71,13 @@ def test_fails_when_restore_test_failed():
 
 def test_fails_when_timestamp_unparseable():
     facts = _jobs(
-        {"id": "b1", "asset": "db", "critical": True,
-         "last_restore_test": "not-a-date", "restore_test_passed": True},
+        {
+            "id": "b1",
+            "asset": "db",
+            "critical": True,
+            "last_restore_test": "not-a-date",
+            "restore_test_passed": True,
+        },
     )
     finding = _control().evaluate(facts)
     assert finding.status is Status.FAIL
@@ -67,8 +87,13 @@ def test_fails_when_timestamp_unparseable():
 def test_naive_timestamp_unparseable_fail_closed():
     # timestamp without tzinfo cannot be compared safely → fail closed
     facts = _jobs(
-        {"id": "b1", "asset": "db", "critical": True,
-         "last_restore_test": "2026-05-01T00:00:00", "restore_test_passed": True},
+        {
+            "id": "b1",
+            "asset": "db",
+            "critical": True,
+            "last_restore_test": "2026-05-01T00:00:00",
+            "restore_test_passed": True,
+        },
     )
     finding = _control().evaluate(facts)
     assert finding.status is Status.FAIL
@@ -77,8 +102,13 @@ def test_naive_timestamp_unparseable_fail_closed():
 
 def test_non_critical_ignored():
     facts = _jobs(
-        {"id": "b1", "asset": "db", "critical": True,
-         "last_restore_test": "2026-05-01T00:00:00+00:00", "restore_test_passed": True},
+        {
+            "id": "b1",
+            "asset": "db",
+            "critical": True,
+            "last_restore_test": "2026-05-01T00:00:00+00:00",
+            "restore_test_passed": True,
+        },
         {"id": "b2", "asset": "scratch", "critical": False},
     )
     assert _control().evaluate(facts).status is Status.PASS

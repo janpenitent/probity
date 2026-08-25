@@ -29,9 +29,7 @@ def _report(score_findings: list[tuple[str, Status]], when: datetime) -> Report:
 
 
 def _from(rows: list[tuple[str, float]]) -> tuple[Snapshot, ...]:
-    return tuple(
-        Snapshot(generated_at=ts, score=score, statuses={}) for ts, score in rows
-    )
+    return tuple(Snapshot(generated_at=ts, score=score, statuses={}) for ts, score in rows)
 
 
 def test_append_then_load_roundtrip(tmp_path):

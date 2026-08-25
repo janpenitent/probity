@@ -129,9 +129,7 @@ def _render_evidence(evidence: Evidence) -> str:
                 columns.append(key)
     head = "".join(f"<th>{escape(c)}</th>" for c in columns)
     rows = "".join(
-        "<tr>"
-        + "".join(f"<td>{escape(str(item.get(c, '')))}</td>" for c in columns)
-        + "</tr>"
+        "<tr>" + "".join(f"<td>{escape(str(item.get(c, '')))}</td>" for c in columns) + "</tr>"
         for item in evidence.items
     )
     return f"""<div class="evidence">

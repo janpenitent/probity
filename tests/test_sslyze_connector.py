@@ -25,9 +25,7 @@ def _scan(hostname, port, supported, *, valid=True, not_after="2099-01-01T00:00:
                     "certificate_deployments": [
                         {
                             "leaf_certificate_subject_matches_hostname": valid,
-                            "path_validation_results": [
-                                {"was_validation_successful": valid}
-                            ],
+                            "path_validation_results": [{"was_validation_successful": valid}],
                             "received_certificate_chain": [{"not_valid_after": not_after}],
                         }
                     ]
@@ -41,8 +39,11 @@ _SSLYZE = {
     "server_scan_results": [
         _scan("portal.example.com", 443, {"tls_1_2": True, "tls_1_3": True, "tls_1_1": False}),
         _scan(
-            "legacy.example.com", 443,
-            {"tls_1_0": True, "tls_1_2": False}, valid=False, not_after="2000-01-01T00:00:00",
+            "legacy.example.com",
+            443,
+            {"tls_1_0": True, "tls_1_2": False},
+            valid=False,
+            not_after="2000-01-01T00:00:00",
         ),
     ]
 }

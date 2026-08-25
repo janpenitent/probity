@@ -174,32 +174,64 @@ def test_scan_with_hard_sources_feeds_all_hard_controls(capsys, tmp_path):
         json.dumps(
             {
                 "assets": [
-                    {"id": "vm-1", "name": "prod-db", "type": "vm",
-                     "managed": True, "last_seen": ago(hours=1)},
+                    {
+                        "id": "vm-1",
+                        "name": "prod-db",
+                        "type": "vm",
+                        "managed": True,
+                        "last_seen": ago(hours=1),
+                    },
                 ],
                 "vulnscans": [
-                    {"id": "vm-1", "asset": "prod-db", "critical": True,
-                     "last_scan": ago(days=5), "scanner": "nessus"},
+                    {
+                        "id": "vm-1",
+                        "asset": "prod-db",
+                        "critical": True,
+                        "last_scan": ago(days=5),
+                        "scanner": "nessus",
+                    },
                 ],
                 "patches": [
-                    {"id": "vm-1", "host": "prod-db", "critical": True,
-                     "last_patched": ago(days=5), "pending_critical": 0},
+                    {
+                        "id": "vm-1",
+                        "host": "prod-db",
+                        "critical": True,
+                        "last_patched": ago(days=5),
+                        "pending_critical": 0,
+                    },
                 ],
                 "log_sources": [
-                    {"id": "src-1", "asset": "prod-db", "critical": True,
-                     "forwarding": True, "last_event": ago(hours=1)},
+                    {
+                        "id": "src-1",
+                        "asset": "prod-db",
+                        "critical": True,
+                        "forwarding": True,
+                        "last_event": ago(hours=1),
+                    },
                 ],
                 "detection_rules": [
-                    {"id": "rule-1", "name": "Impossible travel",
-                     "enabled": True, "last_tested": ago(days=10)},
+                    {
+                        "id": "rule-1",
+                        "name": "Impossible travel",
+                        "enabled": True,
+                        "last_tested": ago(days=10),
+                    },
                 ],
                 "pipelines": [
-                    {"id": "repo-app", "repo": "org/app",
-                     "sast_enabled": True, "secret_scanning_enabled": True},
+                    {
+                        "id": "repo-app",
+                        "repo": "org/app",
+                        "sast_enabled": True,
+                        "secret_scanning_enabled": True,
+                    },
                 ],
                 "training": [
-                    {"id": "u-1", "person": "Alice", "required": True,
-                     "completed_at": ago(days=30)},
+                    {
+                        "id": "u-1",
+                        "person": "Alice",
+                        "required": True,
+                        "completed_at": ago(days=30),
+                    },
                 ],
             }
         )

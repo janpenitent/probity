@@ -47,9 +47,7 @@ class C17Encryption(Control):
         )
         return self._finding(Status.FAIL, summary, unencrypted)
 
-    def _finding(
-        self, status: Status, summary: str, volumes: list[Fact] | None = None
-    ) -> Finding:
+    def _finding(self, status: Status, summary: str, volumes: list[Fact] | None = None) -> Finding:
         evidence: tuple[Evidence, ...] = ()
         if volumes:
             items = tuple(

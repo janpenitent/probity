@@ -58,8 +58,7 @@ class C07Restore(Control):
             )
 
         summary = (
-            f"{len(failing)} of {len(critical)} critical assets lack a recent "
-            "passing restore test."
+            f"{len(failing)} of {len(critical)} critical assets lack a recent passing restore test."
         )
         return self._finding(Status.FAIL, summary, failing)
 

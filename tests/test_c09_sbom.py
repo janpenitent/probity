@@ -12,9 +12,7 @@ NOW = datetime(2026, 6, 4, 12, 0, 0, tzinfo=UTC)
 
 
 def _comps(*specs: dict) -> FactSet:
-    return FactSet(
-        [Fact(SBOM_KIND, f"{s['name']}@{s.get('version', '')}", s) for s in specs]
-    )
+    return FactSet([Fact(SBOM_KIND, f"{s['name']}@{s.get('version', '')}", s) for s in specs])
 
 
 def _control() -> C09Sbom:
@@ -24,8 +22,12 @@ def _control() -> C09Sbom:
 
 def test_passes_when_every_component_has_recent_sbom():
     facts = _comps(
-        {"name": "app", "version": "1.0", "has_sbom": True,
-         "generated_at": "2026-05-01T00:00:00+00:00"},
+        {
+            "name": "app",
+            "version": "1.0",
+            "has_sbom": True,
+            "generated_at": "2026-05-01T00:00:00+00:00",
+        },
     )
     assert _control().evaluate(facts).status is Status.PASS
 
@@ -53,8 +55,12 @@ def test_fails_when_generated_at_missing():
 
 def test_fails_when_sbom_stale():
     facts = _comps(
-        {"name": "app", "version": "1.0", "has_sbom": True,
-         "generated_at": "2025-01-01T00:00:00+00:00"},
+        {
+            "name": "app",
+            "version": "1.0",
+            "has_sbom": True,
+            "generated_at": "2025-01-01T00:00:00+00:00",
+        },
     )
     finding = _control().evaluate(facts)
     assert finding.status is Status.FAIL
@@ -72,8 +78,7 @@ def test_fails_when_generated_at_unparseable():
 
 def test_naive_generated_at_unparseable_fail_closed():
     facts = _comps(
-        {"name": "app", "version": "1.0", "has_sbom": True,
-         "generated_at": "2026-05-01T00:00:00"},
+        {"name": "app", "version": "1.0", "has_sbom": True, "generated_at": "2026-05-01T00:00:00"},
     )
     finding = _control().evaluate(facts)
     assert finding.status is Status.FAIL
@@ -82,8 +87,12 @@ def test_naive_generated_at_unparseable_fail_closed():
 
 def test_reports_only_failing_components():
     facts = _comps(
-        {"name": "app", "version": "1.0", "has_sbom": True,
-         "generated_at": "2026-05-01T00:00:00+00:00"},
+        {
+            "name": "app",
+            "version": "1.0",
+            "has_sbom": True,
+            "generated_at": "2026-05-01T00:00:00+00:00",
+        },
         {"name": "lib", "version": "2.0", "has_sbom": False},
     )
     finding = _control().evaluate(facts)

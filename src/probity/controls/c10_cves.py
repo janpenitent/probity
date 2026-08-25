@@ -49,9 +49,7 @@ class C10Cves(Control):
             )
             return self._finding(Status.FAIL, summary, affected)
 
-        summary = (
-            f"{len(affected)} of {len(deps)} dependencies have only medium/low CVEs."
-        )
+        summary = f"{len(affected)} of {len(deps)} dependencies have only medium/low CVEs."
         return self._finding(Status.PARTIAL, summary, affected)
 
     @staticmethod

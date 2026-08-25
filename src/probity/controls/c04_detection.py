@@ -57,8 +57,7 @@ class C04Detection(Control):
         if not gaps:
             return self._finding(
                 Status.PASS,
-                f"All {len(enabled)} enabled rules were tested within "
-                f"{self._max_age.days}d.",
+                f"All {len(enabled)} enabled rules were tested within {self._max_age.days}d.",
             )
         return self._finding(
             Status.FAIL,

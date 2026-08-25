@@ -5,12 +5,22 @@ from probity.connectors.mock_backup import BACKUP_KIND, MockBackupConnector
 
 
 def test_emits_one_fact_per_backup_job():
-    src = {"backups": [
-        {"id": "b1", "asset": "prod-db", "critical": True,
-         "last_backup": "2026-06-03T00:00:00+00:00"},
-        {"id": "b2", "asset": "logs", "critical": False,
-         "last_backup": "2026-06-01T00:00:00+00:00"},
-    ]}
+    src = {
+        "backups": [
+            {
+                "id": "b1",
+                "asset": "prod-db",
+                "critical": True,
+                "last_backup": "2026-06-03T00:00:00+00:00",
+            },
+            {
+                "id": "b2",
+                "asset": "logs",
+                "critical": False,
+                "last_backup": "2026-06-01T00:00:00+00:00",
+            },
+        ]
+    }
     facts = list(MockBackupConnector(src).collect())
     assert [f.kind for f in facts] == [BACKUP_KIND, BACKUP_KIND]
     assert {f.key for f in facts} == {"b1", "b2"}

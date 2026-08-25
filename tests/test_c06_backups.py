@@ -54,10 +54,13 @@ def test_unparseable_timestamp_fails_closed():
 
 def test_non_critical_stale_backup_is_ignored():
     facts = _jobs(
-        {"id": "b1", "asset": "db", "critical": True,
-         "last_backup": "2026-06-04T06:00:00+00:00"},
-        {"id": "b2", "asset": "scratch", "critical": False,
-         "last_backup": "2025-01-01T00:00:00+00:00"},
+        {"id": "b1", "asset": "db", "critical": True, "last_backup": "2026-06-04T06:00:00+00:00"},
+        {
+            "id": "b2",
+            "asset": "scratch",
+            "critical": False,
+            "last_backup": "2025-01-01T00:00:00+00:00",
+        },
     )
     assert _control().evaluate(facts).status is Status.PASS
 
