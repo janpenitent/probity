@@ -28,3 +28,23 @@ jobs:
         run: mypy
       - name: Test
         run: pytest
+
+  package:
+    name: Build and verify the wheel
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+      - name: Install build tooling
+        run: |
+          python -m pip install --upgrade pip
+          pip install build "twine>=7"
+      - name: Build
+        run: python -m build
+      - name: Check metadata
+        run: twine check dist/*
+      - name: Assert the wheel ships Core only
+        run: python .github/scripts/check_wheel_contents.py
