@@ -14,10 +14,18 @@ pip install -e ".[dev]"
 ## Quality gates (must pass before merge)
 
 ```bash
+make check        # lint + types + tests, in the order CI runs them
+```
+
+Or run them one at a time:
+
+```bash
 ruff check .      # lint + import order
 mypy              # strict type checking
-pytest            # tests + coverage (target 80%+)
+pytest            # tests + coverage (the build fails below 95%)
 ```
+
+`make help` lists the rest (`format`, `build`, `clean`).
 
 ## Conventions
 
