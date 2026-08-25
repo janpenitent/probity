@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-08-25
+
 ### Added
 - `probity --version`, so a bug report can name the build it came from.
 - Issue forms and a pull request template that ask for the version, the exact
@@ -66,5 +68,6 @@ First feature-complete release of the Core.
 ### Quality
 - `ruff` and `mypy --strict` clean; pytest with coverage gate.
 
-[Unreleased]: https://github.com/janpenitent/probity/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/janpenitent/probity/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/janpenitent/probity/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/janpenitent/probity/releases/tag/v0.1.0

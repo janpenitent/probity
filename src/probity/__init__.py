@@ -3,4 +3,4 @@
 
 """Probity — continuous, auditable NIS2 compliance evidence."""
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
