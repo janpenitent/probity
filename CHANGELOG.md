@@ -12,6 +12,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- `probity --version`, so a bug report can name the build it came from.
+- Issue forms and a pull request template that ask for the version, the exact
+  command and the shape of the evidence, instead of free-form prose.
+- A documented stability contract for the four plugin seams (`ARCHITECTURE.md`):
+  what is covered, what is not, and how a breaking change is announced.
+
+### Security
+- Releases are built from a pushed `v*` tag and uploaded to PyPI with Trusted
+  Publishing, so no API token exists to leak.
+- Every released artefact carries a build provenance attestation; `SECURITY.md`
+  documents how to verify it with `gh attestation verify`.
+- CodeQL analysis and Dependabot updates run against Core.
+
 ### Changed
 - **Open-core split.** Live cloud connectors (AWS ×2, GCP, Azure, Entra, GitHub),
   the service layer (`watch`/`serve`, scheduler, alerts, dashboard), the audit
@@ -22,6 +36,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Documentation (README, ARCHITECTURE, CONTROLS, ROADMAP) updated to describe the
   Core as actually published; added `USAGE.md`, `SECURITY.md`, and
   `COMMERCIAL-LICENSE.md`.
+
+### Fixed
+- CI now fails the build below 95% line coverage, when the wheel would ship
+  anything outside Core, when a test fixture stops being synthetic, and when a
+  release tag disagrees with the packaged version — each of these previously
+  only surfaced after the fact.
 
 ## [0.1.0] - 2026-06-04
 
