@@ -78,6 +78,30 @@ Core, private `probity-enterprise` overlay, paid modules moved out and
 relicensed, Core published to PyPI, commercial dual-license offer in place. See
 [TIERING.md](TIERING.md).
 
+## E7 — Make the project safe to accept work from strangers
+E0–E6 and the tiering are done, so the next engineering work is no longer about
+features: it is about the repo surviving contact with contributors it does not
+know.
+
+- [x] Issue forms that demand version, exact command and a *redacted* evidence
+  excerpt, with vulnerabilities routed to a private advisory instead of a public
+  issue.
+- [x] Pull request template carrying the quality gates and the "no Enterprise
+  functionality in Core" check.
+- [x] Tag-triggered PyPI release with Trusted Publishing — no long-lived token,
+  and the tag is asserted against `pyproject.toml` before upload.
+- [x] Probity scans its own supply chain in CI and fails the build when its own
+  SBOM evidence regresses.
+- [ ] **CLA.** Dual-licensing only works while one party holds the rights to all
+  of Core. Outside contributions need a signed agreement before the first one is
+  merged — see the open question in [TIERING.md](TIERING.md).
+- [ ] **Fixture policy.** Every connector fixture is synthetic today, but nothing
+  enforces it. Add a check that fails on anything resembling a real hostname,
+  account id or credential in `tests/`.
+- [ ] **Deprecation policy for the plugin seams.** The four entry points are a
+  public API the moment someone outside writes against them; say what stability
+  they promise before that happens, not after.
+
 ## Next (not engineering)
 Real-world validation with auditors / compliance teams, user docs polish, and
 hardening the Enterprise install + licensing flow before selling.
