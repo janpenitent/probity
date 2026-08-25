@@ -15,6 +15,10 @@ jobs:
   build:
     name: Build the distributions
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # Signs the attestation.
+      attestations: write
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -33,6 +37,13 @@ jobs:
         run: python .github/scripts/check_wheel_contents.py
       - name: Assert the tag matches the packaged version
         run: python .github/scripts/check_tag_matches_version.py "${GITHUB_REF_NAME}"
+      # Ties each artefact to the workflow, commit and tag that produced it, so a
+      # user can verify what they installed came from here:
+      #   gh attestation verify probity-0.1.0-py3-none-any.whl -R janpenitent/probity
+      - name: Attest the build provenance
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: dist/*
       - uses: actions/upload-artifact@v4
         with:
           name: dist
