@@ -1,0 +1,53 @@
+name: Release
+
+# Publishing is manual today: build locally, twine upload, hope the right files
+# went out. This makes the tag the trigger and PyPI Trusted Publishing the
+# credential, so no API token ever exists to leak — the same posture Probity
+# checks for in other people's pipelines (C13).
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build the distributions
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+      - name: Install build tooling
+        run: |
+          python -m pip install --upgrade pip
+          pip install build "twine>=7"
+      - name: Build
+        run: python -m build
+      - name: Check metadata
+        run: twine check dist/*
+      - name: Assert the wheel ships Core only
+        run: python .github/scripts/check_wheel_contents.py
+      - name: Assert the tag matches the packaged version
+        run: python .github/scripts/check_tag_matches_version.py "${GITHUB_REF_NAME}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  publish:
+    name: Publish to PyPI
+    needs: build
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write # Trusted Publishing: mints a short-lived OIDC token.
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@release/v1
